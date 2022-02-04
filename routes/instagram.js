@@ -369,4 +369,37 @@ router.get("/followinfo/:id", function (req, res) {
   });
 });
 
+// フォローする
+router.post("/follow", function (req, res) {
+  // 自分のフォローリストに追加
+  const usermodel = mongoose.model("users", userSchema);
+  usermodel.find({ userId: req.body.userId }, function (err, result) {
+    result[0].follow.push(req.body.targetUserId);
+    result[0].save();
+    res.send(result[0]);
+  });
+  // 対象のフォロワーリストに追加
+  usermodel.find({ userId: req.body.targetUserId }, function (err, result) {
+    result[0].follower.push(req.body.userId);
+    result[0].save();
+  });
+});
+
+// フォロー解除
+router.post("/unfollow", function (req, res) {
+  // 自分のフォローリストから削除
+  const usermodel = mongoose.model("users", userSchema);
+  usermodel.find({ userId: req.body.userId }, function (err, result) {
+    const index = result[0].follow.indexOf(req.body.targetUserId);
+    result[0].follow.splice(index, 1);
+    result[0].save();
+    res.send(result[0]);
+  });
+  // 対象のフォロワーリストから削除
+  usermodel.find({ userId: req.body.targetUserId }, function (err, result) {
+    const index = result[0].follower.indexOf(req.body.userId);
+    result[0].follower.splice(index, 1);
+    result[0].save();
+  });
+});
 module.exports = router;
