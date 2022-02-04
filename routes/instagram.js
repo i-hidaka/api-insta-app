@@ -243,6 +243,7 @@ router.get("/home/:id", function (req, res) {
     });
   });
 });
+// ユーザー情報変更
 router.post("/setting", function (req, res) {
   const usermodel = mongoose.model("users", userSchema);
   usermodel.find({ userId: req.body.userId }, function (err, result) {
@@ -270,5 +271,13 @@ router.post("/setting", function (req, res) {
     }
   });
 });
-
+// 投稿にいいねする
+router.post("/favorite", function (req, res) {
+  const postmodel = mongoose.model("posts", postSchema);
+  postmodel.find({ postId: req.body.postId }, function (err, result) {
+    result[0].favorite.push(req.body.userName);
+    result[0].save();
+    res.send(result[0]);
+  });
+});
 module.exports = router;
