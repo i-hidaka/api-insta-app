@@ -25,7 +25,7 @@ const userSchema = mongoose.Schema({
   bio: String,
 });
 // 会員登録する
-router.post("/register", function (req, res) {
+router.post("/signup", function (req, res) {
   const registermodel = mongoose.model("users", userSchema);
   //   全件取得した後、一番最後のIDを取得（自動採番）
   registermodel.find({}, function (err, result) {
