@@ -1,6 +1,7 @@
 var express = require("express");
 var router = express.Router();
 // ローカルのときは3000番　http://localhost:3000
+// デプロイ先　https://api-instagram-app.herokuapp.com/
 const mongoose = require("mongoose");
 
 // 環境変数を受けとる
@@ -136,16 +137,16 @@ router.post("/post", function (req, res) {
   });
 });
 
-const commentShema = mongoose.Schema({
+const commentSchema = mongoose.Schema({
   commentId: Number,
   postId: Number,
   userID: Number,
-  comment: Number,
+  comment: String,
   commentDate: Date,
 });
 // コメントする
 router.post("/comment", function (req, res) {
-  const commentmodel = mongoose.model("comments", commentShema);
+  const commentmodel = mongoose.model("comments", commentSchema);
   const comment = new commentmodel();
   commentmodel.find({}, function (error, result) {
     comment.commentId = result[result.length - 1].commentId + 1;
@@ -164,6 +165,109 @@ router.post("/comment", function (req, res) {
         commentDate: comment.commentDate,
       },
     });
+  });
+});
+
+// Home画面でフォローしてる人の投稿取得
+router.get("/home/:id", function (req, res) {
+  const usermodel = mongoose.model("users", userSchema);
+  const postmodel = mongoose.model("posts", postSchema);
+  const commentmodel = mongoose.model("comments", commentSchema);
+  let userDate = new Object();
+  let postDates = [];
+  let followUserDates = [];
+  let commentDate = [];
+  //   自分のデータ取得
+  async function getMyDate() {
+    await usermodel
+      .find({ userId: req.params.id })
+      .exec()
+      .then((userResult) => {
+        userDate = userResult[0];
+      });
+  }
+  // 自分のフォローしてる人の投稿取得
+  async function getPost() {
+    for (let follow of userDate.follow) {
+      await postmodel
+        .find({ userId: follow })
+        .exec()
+        .then((followResult) => {
+          postDates.push(followResult);
+        });
+    }
+  }
+  //   フォローしている人の情報取得
+  async function getPostUser() {
+    await usermodel
+      .find({ userId: userDate.follow })
+      .exec()
+      .then((followUserDateResult) => {
+        followUserDates = followUserDateResult;
+      });
+  }
+  // 投稿に紐付いたコメントを取得
+  async function getComment() {
+    for (let userPosts of postDates) {
+      for (let userPost of userPosts) {
+        await commentmodel
+          .find({ postId: userPost.postId })
+          .exec()
+          .then((commentResult) => {
+            commentDate.push(commentResult);
+          });
+      }
+    }
+  }
+  //   自分のデータ取得
+  getMyDate().then((result) => {
+    // 自分のフォローしてる人の投稿取得
+    getPost().then((result) => {
+      //   console.log(postDate);
+      //   フォローしている人の情報取得
+      getPostUser().then((result) => {
+        // console.log(followUserDate);
+        // 投稿に紐付いたコメントを取得
+        getComment().then((result) => {
+          //   console.log(commentDate);
+          for (let userPostDates of postDates) {
+            for (let userPostDate of userPostDates) {
+              for (let followUserDate of followUserDates) {
+                if (userPostDate.userId === followUserDate.userId) {
+                }
+              }
+            }
+          }
+        });
+      });
+    });
+  });
+});
+router.post("/setting", function (req, res) {
+  const usermodel = mongoose.model("users", userSchema);
+  usermodel.find({ userId: req.body.userId }, function (err, result) {
+    // 登録した名前と現在の名前が一致（変えていないとき)は保存する
+    if (result[0].userName === req.body.userName) {
+      result[0].userName = req.body.userName;
+      result[0].icon = req.body.icon;
+      result[0].bio = req.body.bio;
+      result[0].save();
+      res.send({ status: "success", data: result[0] });
+    } else {
+      // ユーザー名が既に存在したら弾く
+      usermodel.find(
+        { userName: req.body.userName },
+        function (err, nameResult) {
+          if (nameResult.length >= 1) {
+            res.send({
+              status: "error",
+              data: req.body,
+              message: "そのユーザー名は既に登録済みです",
+            });
+          }
+        }
+      );
+    }
   });
 });
 
