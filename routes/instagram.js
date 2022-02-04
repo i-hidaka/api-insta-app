@@ -176,7 +176,7 @@ router.get("/home/:id", function (req, res) {
   let userDate = new Object();
   let postDates = [];
   let followUserDates = [];
-  let commentDate = [];
+  let commentDates = [];
   //   自分のデータ取得
   async function getMyDate() {
     await usermodel
@@ -214,7 +214,7 @@ router.get("/home/:id", function (req, res) {
           .find({ postId: userPost.postId })
           .exec()
           .then((commentResult) => {
-            commentDate.push(commentResult);
+            commentDates.push(commentResult);
           });
       }
     }
@@ -223,26 +223,49 @@ router.get("/home/:id", function (req, res) {
   getMyDate().then((result) => {
     // 自分のフォローしてる人の投稿取得
     getPost().then((result) => {
-      //   console.log(postDate);
       //   フォローしている人の情報取得
+      // console.log(postDates);
       getPostUser().then((result) => {
-        // console.log(followUserDate);
         // 投稿に紐付いたコメントを取得
         getComment().then((result) => {
-          //   console.log(commentDate);
+          // console.log(commentDates);
+          const newPostDates = [];
+          // 投稿とユーザー情報を紐付ける
           for (let userPostDates of postDates) {
             for (let userPostDate of userPostDates) {
               for (let followUserDate of followUserDates) {
                 if (userPostDate.userId === followUserDate.userId) {
+                  // toObjectで新しい変数に代入しないとプロパティの編集できない？
+                  const postDate = userPostDate.toObject();
+                  postDate.userInfo = followUserDate;
+                  newPostDates.push(postDate);
                 }
               }
             }
           }
+          console.log(newPostDates);
+      
+          // 投稿とユーザー情報が紐付いたものにコメントを紐付ける
+          const completePosts = [];
+          for (let newPostDate of newPostDates) {
+            newPostDate.comments = [];
+            for (let comments of commentDates) {
+              for (let comment of comments) {
+                if (newPostDate.postId === comment.postId) {
+                  newPostDate.comments.push(comment);
+                }
+              }
+            }
+            completePosts.push(newPostDate);
+          }
+          // console.log(completePosts);
+          res.send(completePosts)
         });
       });
     });
   });
 });
+
 // ユーザー情報変更
 router.post("/setting", function (req, res) {
   const usermodel = mongoose.model("users", userSchema);
