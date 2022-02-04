@@ -280,4 +280,33 @@ router.post("/favorite", function (req, res) {
     res.send(result[0]);
   });
 });
+// ユーザーページ
+router.get("/mypage/:id", function (req, res) {
+  const usermodel = mongoose.model("users", userSchema);
+  let user = "";
+  async function getUser() {
+    await usermodel
+      .find({ userId: req.params.id })
+      .exec()
+      .then((result) => {
+        user = result[0];
+      });
+  }
+  const postmodel = mongoose.model("posts", postSchema);
+  let post = "";
+  async function getPost() {
+    await postmodel
+      .find({ userId: req.params.id })
+      .exec()
+      .then((result) => {
+        post = result;
+      });
+  }
+  getUser().then((result) => {
+    getPost().then((result) => {
+      res.send({ user: user, post: post });
+    });
+  });
+});
+
 module.exports = router;
