@@ -308,5 +308,20 @@ router.get("/mypage/:id", function (req, res) {
     });
   });
 });
+// 名前でアカウント検索
+router.get("/search/account", function (req, res) {
+  const usermodel = mongoose.model("users", userSchema);
+  usermodel.find(
+    // 検索欄の文字列を含むもの全て検索
+    { userName: new RegExp(req.body.searchUserName) },
+    function (err, result) {
+      if (result.length === 0) {
+        res.send({ message: "そのユーザー名は存在しません" });
+      } else {
+        res.send(result);
+      }
+    }
+  );
+});
 
 module.exports = router;
