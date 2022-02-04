@@ -308,6 +308,7 @@ router.get("/mypage/:id", function (req, res) {
     });
   });
 });
+
 // 名前でアカウント検索
 router.get("/search/account", function (req, res) {
   const usermodel = mongoose.model("users", userSchema);
@@ -322,6 +323,50 @@ router.get("/search/account", function (req, res) {
       }
     }
   );
+});
+// フォローフォロワーの情報取得
+router.get("/followinfo/:id", function (req, res) {
+  const usermodel = mongoose.model("users", userSchema);
+  let follows = [];
+  let followers = [];
+  let followinfo = [];
+  let followerinfo = [];
+  async function getfollowUser() {
+    await usermodel
+      .find({ userId: req.params.id })
+      .exec()
+      .then((result) => {
+        follows = result[0].follow;
+        followers = result[0].follower;
+      });
+  }
+  async function getfollowinfo() {
+    for (let follow of follows) {
+      await usermodel
+        .find({ userId: follow })
+        .exec()
+        .then((result) => {
+          followinfo.push(result[0]);
+        });
+    }
+  }
+  async function getfollowerinfo() {
+    for (let follower of followers) {
+      await usermodel
+        .find({ userId: follower })
+        .exec()
+        .then((result) => {
+          followerinfo.push(result[0]);
+        });
+    }
+  }
+  getfollowUser().then((result) => {
+    getfollowinfo().then((result) => {
+      getfollowerinfo().then((result) => {
+        res.send({ follow: followinfo, follower: followerinfo });
+      });
+    });
+  });
 });
 
 module.exports = router;
