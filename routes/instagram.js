@@ -1,4 +1,5 @@
 var express = require("express");
+const { rethrow } = require("jade/lib/runtime");
 var router = express.Router();
 // ローカルのときは3000番　http://localhost:3000
 // デプロイ先　https://api-instagram-app.herokuapp.com/
@@ -173,93 +174,95 @@ router.get("/home/:id", function (req, res) {
   const usermodel = mongoose.model("users", userSchema);
   const postmodel = mongoose.model("posts", postSchema);
   const commentmodel = mongoose.model("comments", commentSchema);
-  let userDate = new Object();
-  let postDates = [];
-  let followUserDates = [];
-  let commentDates = [];
+  let userData = new Object();
+  let postDatas = [];
+  let followUserDatas = [];
+  let commentDatas = [];
   //   自分のデータ取得
-  async function getMyDate() {
+  async function getMyData() {
     await usermodel
       .find({ userId: req.params.id })
       .exec()
       .then((userResult) => {
-        userDate = userResult[0];
+        userData = userResult[0];
       });
   }
   // 自分のフォローしてる人の投稿取得
   async function getPost() {
-    for (let follow of userDate.follow) {
+    for (let follow of userData.follow) {
       await postmodel
         .find({ userId: follow })
         .exec()
         .then((followResult) => {
-          postDates.push(followResult);
+          postDatas.push(followResult);
         });
     }
   }
   //   フォローしている人の情報取得
   async function getPostUser() {
     await usermodel
-      .find({ userId: userDate.follow })
+      .find({ userId: userData.follow })
       .exec()
-      .then((followUserDateResult) => {
-        followUserDates = followUserDateResult;
+      .then((followUserDataResult) => {
+        followUserDatas = followUserDataResult;
       });
   }
   // 投稿に紐付いたコメントを取得
   async function getComment() {
-    for (let userPosts of postDates) {
+    for (let userPosts of postDatas) {
       for (let userPost of userPosts) {
         await commentmodel
           .find({ postId: userPost.postId })
           .exec()
           .then((commentResult) => {
-            commentDates.push(commentResult);
+            commentDatas.push(commentResult);
           });
       }
     }
   }
   //   自分のデータ取得
-  getMyDate().then((result) => {
+  getMyData().then((result) => {
     // 自分のフォローしてる人の投稿取得
     getPost().then((result) => {
       //   フォローしている人の情報取得
-      // console.log(postDates);
+      // console.log(postDatas);
       getPostUser().then((result) => {
         // 投稿に紐付いたコメントを取得
         getComment().then((result) => {
-          // console.log(commentDates);
-          const newPostDates = [];
+          // console.log(commentDatas);
+          const newPostDatas = [];
           // 投稿とユーザー情報を紐付ける
-          for (let userPostDates of postDates) {
-            for (let userPostDate of userPostDates) {
-              for (let followUserDate of followUserDates) {
-                if (userPostDate.userId === followUserDate.userId) {
-                  // toObjectで新しい変数に代入しないとプロパティの編集できない？
-                  const postDate = userPostDate.toObject();
-                  postDate.userInfo = followUserDate;
-                  newPostDates.push(postDate);
+          for (let userPostDatas of postDatas) {
+            for (let userPostData of userPostDatas) {
+              for (let followUserData of followUserDatas) {
+                if (userPostData.userId === followUserData.userId) {
+                  // mongooseで取得したオブジェクトはtoObjectで新しい変数に代入しないとプロパティの編集できない？
+                  const postData = userPostData.toObject();
+                  postData.userInfo = followUserData;
+                  newPostDatas.push(postData);
                 }
               }
             }
           }
-          console.log(newPostDates);
-      
+          console.log(newPostDatas);
+
           // 投稿とユーザー情報が紐付いたものにコメントを紐付ける
           const completePosts = [];
-          for (let newPostDate of newPostDates) {
-            newPostDate.comments = [];
-            for (let comments of commentDates) {
+          for (let newPostData of newPostDatas) {
+            // コメントを入れる空の配列を作成
+            newPostData.comments = [];
+            // comments・・・postIdごとに別れたコメントの配列
+            for (let comments of commentDatas) {
               for (let comment of comments) {
-                if (newPostDate.postId === comment.postId) {
-                  newPostDate.comments.push(comment);
+                if (newPostData.postId === comment.postId) {
+                  newPostData.comments.push(comment);
                 }
               }
             }
-            completePosts.push(newPostDate);
+            completePosts.push(newPostData);
           }
           // console.log(completePosts);
-          res.send(completePosts)
+          res.send(completePosts);
         });
       });
     });
@@ -298,9 +301,17 @@ router.post("/setting", function (req, res) {
 router.post("/favorite", function (req, res) {
   const postmodel = mongoose.model("posts", postSchema);
   postmodel.find({ postId: req.body.postId }, function (err, result) {
-    result[0].favorite.push(req.body.userName);
-    result[0].save();
-    res.send(result[0]);
+    if (result[0].favorite.includes(req.body.userName) === true) {
+      res.send({
+        status: "error",
+        data: req.body,
+        message: "既にいいねしています",
+      });
+    } else {
+      result[0].favorite.push(req.body.userName);
+      result[0].save();
+      res.send(result[0]);
+    }
   });
 });
 // ユーザーページ
@@ -397,12 +408,27 @@ router.post("/follow", function (req, res) {
   // 自分のフォローリストに追加
   const usermodel = mongoose.model("users", userSchema);
   usermodel.find({ userId: req.body.userId }, function (err, result) {
-    result[0].follow.push(req.body.targetUserId);
-    result[0].save();
-    res.send(result[0]);
+    if (result[0].follow.includes(req.body.targetUserId) === true) {
+      res.send({
+        status: "eror",
+        data: req.body,
+        message: "既にフォローリストに入っています",
+      });
+    } else {
+      result[0].follow.push(req.body.targetUserId);
+      result[0].save();
+      res.send(result[0]);
+    }
   });
   // 対象のフォロワーリストに追加
   usermodel.find({ userId: req.body.targetUserId }, function (err, result) {
+    if (result[0].follow.includes(req.body.userId) === true) {
+      res.send({
+        status: "eror",
+        data: req.body,
+        message: "既に相手のフォロワーリストに入っています",
+      });
+    }
     result[0].follower.push(req.body.userId);
     result[0].save();
   });
@@ -413,16 +439,32 @@ router.post("/unfollow", function (req, res) {
   // 自分のフォローリストから削除
   const usermodel = mongoose.model("users", userSchema);
   usermodel.find({ userId: req.body.userId }, function (err, result) {
-    const index = result[0].follow.indexOf(req.body.targetUserId);
-    result[0].follow.splice(index, 1);
-    result[0].save();
-    res.send(result[0]);
+    if (result[0].follow.includes(req.body.targetUserId) === false) {
+      res.send({
+        status: "error",
+        data: req.body,
+        message: "対象をフォローしていません",
+      });
+    } else {
+      const index = result[0].follow.indexOf(req.body.targetUserId);
+      result[0].follow.splice(index, 1);
+      result[0].save();
+      res.send(result[0]);
+    }
   });
   // 対象のフォロワーリストから削除
   usermodel.find({ userId: req.body.targetUserId }, function (err, result) {
-    const index = result[0].follower.indexOf(req.body.userId);
-    result[0].follower.splice(index, 1);
-    result[0].save();
+    if (result[0].follow.includes(req.body.userId) === false) {
+      res.send({
+        status: "error",
+        data: req.body,
+        message: "対象のフォロワーリストに入っていません",
+      });
+    } else {
+      const index = result[0].follower.indexOf(req.body.userId);
+      result[0].follower.splice(index, 1);
+      result[0].save();
+    }
   });
 });
 module.exports = router;
