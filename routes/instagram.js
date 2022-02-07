@@ -169,7 +169,7 @@ router.post("/comment", function (req, res) {
 
 // Home画面でフォローしてる人の投稿取得
 router.get("/home/:id", function (req, res) {
-  let userData = new Object();
+  let userData = "";
   let postDatas = [];
   let followUserDatas = [];
   let commentDatas = [];
@@ -358,7 +358,7 @@ router.get("/mypage/:id", function (req, res) {
 router.get("/search/account", function (req, res) {
   usermodel.find(
     // 検索欄の文字列を含むもの全て検索
-    { userName: new RegExp(req.body.searchUserName) },
+    { userName: new RegExp(req.body.userName) },
     function (err, result) {
       if (result.length === 0) {
         res.send({ message: "そのユーザー名は存在しません" });
@@ -368,6 +368,7 @@ router.get("/search/account", function (req, res) {
     }
   );
 });
+
 // フォローフォロワーの情報取得
 router.get("/followinfo/:id", function (req, res) {
   let follows = [];
@@ -493,5 +494,71 @@ router.get("/postdetail/:id", function (req, res) {
     });
   });
 });
+// 投稿内容で検索する
+router.post("/search/caption", function (req, res) {
+  let posts = [];
+  let userInfos = [];
+  let comments = [];
 
+  async function getPost() {
+    await postmodel
+      .find({ caption: new RegExp(req.body.caption) })
+      .exec()
+      .then((result) => {
+        posts = result;
+      });
+  }
+  async function getUser() {
+    for (let post of posts) {
+      userInfos.push(post.userId);
+    }
+    await usermodel
+      .find({ userId: userInfos })
+      .exec()
+      .then((result) => {
+        userInfos = result;
+      });
+  }
+  async function getComment() {
+    for (let post of posts) {
+      comments.push(post.postId);
+    }
+    await commentmodel
+      .find({ postId: comments })
+      .exec()
+      .then((result) => {
+        comments = result;
+      });
+  }
+  getPost().then((result) => {
+    // console.log(posts);
+    getUser().then((result) => {
+      // console.log(userInfos);
+      getComment().then((result) => {
+        const newPosts = [];
+        for (let post of posts) {
+          for (let userInfo of userInfos) {
+            if (post.userId === userInfo.userId) {
+              const userPost = post.toObject();
+              userPost.userInfo = userInfo;
+              newPosts.push(userPost);
+            }
+          }
+        }
+        const completePosts = [];
+        for (let newPost of newPosts) {
+          newPost.comments = [];
+          for (let comment of comments) {
+            if (newPost.postId === comment.postId) {
+              newPost.comments.push(comment);
+            }
+          }
+          completePosts.push(newPost);
+        }
+        res.send(completePosts);
+        console.log(completePosts);
+      });
+    });
+  });
+});
 module.exports = router;
