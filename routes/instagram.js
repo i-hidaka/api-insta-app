@@ -28,7 +28,7 @@ const userSchema = mongoose.Schema({
 const postSchema = mongoose.Schema({
   postId: Number,
   userId: Number,
-  imgUrl: Array,
+  imageUrl: Array,
   caption: String,
   prefecture: Object,
   postData: Date,
@@ -123,7 +123,7 @@ router.post("/post", function (req, res) {
   postmodel.find({}, function (err, result) {
     post.postId = result[result.length - 1].postId + 1;
     post.userId = req.body.userId;
-    post.imgUrl = req.body.imgUrl;
+    post.imageUrl = req.body.imageUrl;
     post.caption = req.body.caption;
     post.prefecture = req.body.prefecture;
     post.postData = new Date();
@@ -134,7 +134,7 @@ router.post("/post", function (req, res) {
       data: {
         postId: post.postId,
         userId: post.userId,
-        imgUrl: post.imgUrl,
+        imageUrl: post.imageUrl,
         caption: post.caption,
         prefecture: post.prefecture,
         postData: post.postData,
