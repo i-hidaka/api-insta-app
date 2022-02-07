@@ -15,7 +15,6 @@ mongoose.connect(
     console.log("mongoDBに接続しました");
   }
 );
-
 const userSchema = mongoose.Schema({
   userId: Number,
   userName: String,
@@ -25,12 +24,33 @@ const userSchema = mongoose.Schema({
   icon: String,
   bio: String,
 });
+
+const postSchema = mongoose.Schema({
+  postId: Number,
+  userId: Number,
+  imgUrl: Array,
+  caption: String,
+  prefecture: Object,
+  postData: Date,
+  favorite: Array,
+});
+
+const commentSchema = mongoose.Schema({
+  commentId: Number,
+  postId: Number,
+  userID: Number,
+  comment: String,
+  commentDate: Date,
+});
+const usermodel = mongoose.model("users", userSchema);
+const postmodel = mongoose.model("posts", postSchema);
+const commentmodel = mongoose.model("comments", commentSchema);
+
 // 会員登録する
 router.post("/signup", function (req, res) {
-  const registermodel = mongoose.model("users", userSchema);
   //   全件取得した後、一番最後のIDを取得（自動採番）
-  registermodel.find({}, function (err, result) {
-    const register = new registermodel();
+  usermodel.find({}, function (err, result) {
+    const register = new usermodel();
     // 配列の一番最後のID番号に＋1
     register.userId = result[result.length - 1].userId + 1;
     register.userName = req.body.userName;
@@ -40,41 +60,37 @@ router.post("/signup", function (req, res) {
     register.icon = "";
     register.bio = "";
 
-    registermodel.find(
-      { userName: req.body.userName },
-      function (err, nameResult) {
-        if (nameResult.length === 0) {
-          register.save();
-          res.send({
-            status: "success",
-            data: {
-              userId: register.userId,
-              userName: register.userName,
-              password: register.password,
-              follow: register.follow,
-              follower: register.follower,
-              icon: register.icon,
-              bio: register.bio,
-            },
-            message: "会員登録成功",
-          });
-        } else {
-          //  アドレスが既に登録済みの場合はエラーにする
-          res.send({
-            status: "error",
-            data: req.body,
-            message: "そのユーザーネームは既に登録済みです",
-          });
-        }
+    usermodel.find({ userName: req.body.userName }, function (err, nameResult) {
+      if (nameResult.length === 0) {
+        register.save();
+        res.send({
+          status: "success",
+          data: {
+            userId: register.userId,
+            userName: register.userName,
+            password: register.password,
+            follow: register.follow,
+            follower: register.follower,
+            icon: register.icon,
+            bio: register.bio,
+          },
+          message: "会員登録成功",
+        });
+      } else {
+        //  アドレスが既に登録済みの場合はエラーにする
+        res.send({
+          status: "error",
+          data: req.body,
+          message: "そのユーザーネームは既に登録済みです",
+        });
       }
-    );
+    });
   });
 });
 
 // ログイン
 router.post("/login", function (req, res) {
-  const registermodel = mongoose.model("users", userSchema);
-  registermodel.find(
+  usermodel.find(
     { userName: req.body.userName, password: req.body.password },
     function (err, result) {
       if (result.length === 0) {
@@ -101,18 +117,8 @@ router.post("/login", function (req, res) {
   );
 });
 
-const postSchema = mongoose.Schema({
-  postId: Number,
-  userId: Number,
-  imgUrl: Array,
-  caption: String,
-  prefecture: Object,
-  postData: Date,
-  favorite: Array,
-});
 // 投稿する
 router.post("/post", function (req, res) {
-  const postmodel = mongoose.model("posts", postSchema);
   const post = new postmodel();
   postmodel.find({}, function (err, result) {
     post.postId = result[result.length - 1].postId + 1;
@@ -138,16 +144,8 @@ router.post("/post", function (req, res) {
   });
 });
 
-const commentSchema = mongoose.Schema({
-  commentId: Number,
-  postId: Number,
-  userID: Number,
-  comment: String,
-  commentDate: Date,
-});
 // コメントする
 router.post("/comment", function (req, res) {
-  const commentmodel = mongoose.model("comments", commentSchema);
   const comment = new commentmodel();
   commentmodel.find({}, function (error, result) {
     comment.commentId = result[result.length - 1].commentId + 1;
@@ -171,9 +169,6 @@ router.post("/comment", function (req, res) {
 
 // Home画面でフォローしてる人の投稿取得
 router.get("/home/:id", function (req, res) {
-  const usermodel = mongoose.model("users", userSchema);
-  const postmodel = mongoose.model("posts", postSchema);
-  const commentmodel = mongoose.model("comments", commentSchema);
   let userData = new Object();
   let postDatas = [];
   let followUserDatas = [];
@@ -245,7 +240,6 @@ router.get("/home/:id", function (req, res) {
             }
           }
           // console.log(newPostDatas);
-
           // 投稿とユーザー情報が紐付いたものにコメントを紐付ける
           const completePosts = [];
           for (let newPostData of newPostDatas) {
@@ -261,7 +255,7 @@ router.get("/home/:id", function (req, res) {
             }
             completePosts.push(newPostData);
           }
-          
+
           // 投稿日でsort;
           completePosts.sort(function (a, b) {
             return a.postDate > b.posyDate ? 1 : -1;
@@ -273,7 +267,6 @@ router.get("/home/:id", function (req, res) {
             });
           }
           // console.log(sortPostDate);
-
           res.send(completePosts);
         });
       });
@@ -283,7 +276,6 @@ router.get("/home/:id", function (req, res) {
 
 // ユーザー情報変更
 router.post("/setting", function (req, res) {
-  const usermodel = mongoose.model("users", userSchema);
   usermodel.find({ userId: req.body.userId }, function (err, result) {
     // 登録した名前と現在の名前が一致（変えていないとき)は保存する
     if (result[0].userName === req.body.userName) {
@@ -309,9 +301,9 @@ router.post("/setting", function (req, res) {
     }
   });
 });
+
 // 投稿にいいねする
 router.post("/favorite", function (req, res) {
-  const postmodel = mongoose.model("posts", postSchema);
   postmodel.find({ postId: req.body.postId }, function (err, result) {
     if (result[0].favorite.includes(req.body.userName) === true) {
       res.send({
@@ -326,9 +318,9 @@ router.post("/favorite", function (req, res) {
     }
   });
 });
+
 // ユーザーページ
 router.get("/mypage/:id", function (req, res) {
-  const usermodel = mongoose.model("users", userSchema);
   let user = "";
   async function getUser() {
     await usermodel
@@ -338,7 +330,7 @@ router.get("/mypage/:id", function (req, res) {
         user = result[0];
       });
   }
-  const postmodel = mongoose.model("posts", postSchema);
+
   let post = "";
   async function getPost() {
     await postmodel
@@ -357,7 +349,6 @@ router.get("/mypage/:id", function (req, res) {
 
 // 名前でアカウント検索
 router.get("/search/account", function (req, res) {
-  const usermodel = mongoose.model("users", userSchema);
   usermodel.find(
     // 検索欄の文字列を含むもの全て検索
     { userName: new RegExp(req.body.searchUserName) },
@@ -372,7 +363,6 @@ router.get("/search/account", function (req, res) {
 });
 // フォローフォロワーの情報取得
 router.get("/followinfo/:id", function (req, res) {
-  const usermodel = mongoose.model("users", userSchema);
   let follows = [];
   let followers = [];
   let followinfo = [];
@@ -418,14 +408,14 @@ router.get("/followinfo/:id", function (req, res) {
 // フォローする
 router.post("/follow", function (req, res) {
   // 自分のフォローリストに追加
-  const usermodel = mongoose.model("users", userSchema);
   usermodel.find({ userId: req.body.userId }, function (err, result) {
     if (result[0].follow.includes(req.body.targetUserId) === true) {
       res.send({
-        status: "eror",
+        status: "error",
         data: req.body,
         message: "既にフォローリストに入っています",
       });
+      return;
     } else {
       result[0].follow.push(req.body.targetUserId);
       result[0].save();
@@ -434,13 +424,6 @@ router.post("/follow", function (req, res) {
   });
   // 対象のフォロワーリストに追加
   usermodel.find({ userId: req.body.targetUserId }, function (err, result) {
-    if (result[0].follow.includes(req.body.userId) === true) {
-      res.send({
-        status: "eror",
-        data: req.body,
-        message: "既に相手のフォロワーリストに入っています",
-      });
-    }
     result[0].follower.push(req.body.userId);
     result[0].save();
   });
@@ -449,7 +432,6 @@ router.post("/follow", function (req, res) {
 // フォロー解除
 router.post("/unfollow", function (req, res) {
   // 自分のフォローリストから削除
-  const usermodel = mongoose.model("users", userSchema);
   usermodel.find({ userId: req.body.userId }, function (err, result) {
     if (result[0].follow.includes(req.body.targetUserId) === false) {
       res.send({
@@ -457,6 +439,7 @@ router.post("/unfollow", function (req, res) {
         data: req.body,
         message: "対象をフォローしていません",
       });
+      return;
     } else {
       const index = result[0].follow.indexOf(req.body.targetUserId);
       result[0].follow.splice(index, 1);
@@ -466,17 +449,41 @@ router.post("/unfollow", function (req, res) {
   });
   // 対象のフォロワーリストから削除
   usermodel.find({ userId: req.body.targetUserId }, function (err, result) {
-    if (result[0].follow.includes(req.body.userId) === false) {
-      res.send({
-        status: "error",
-        data: req.body,
-        message: "対象のフォロワーリストに入っていません",
+    const index = result[0].follower.indexOf(req.body.userId);
+    result[0].follower.splice(index, 1);
+    result[0].save();
+  });
+});
+
+// 投稿詳細画面
+router.get("/postdetail/:id", function (req, res) {
+  let postData = "";
+  let commentData = "";
+  async function getPostDetail() {
+    await postmodel
+      .find({ postId: req.params.id })
+      .exec()
+      .then((result) => {
+        postData = result[0];
       });
-    } else {
-      const index = result[0].follower.indexOf(req.body.userId);
-      result[0].follower.splice(index, 1);
-      result[0].save();
-    }
+  }
+  async function getComment() {
+    await commentmodel
+      .find({ postId: req.params.id })
+      .exec()
+      .then((result) => {
+        commentData = result;
+      });
+  }
+  getPostDetail().then((result) => {
+    getComment().then((result) => {
+      usermodel.find({ userId: postData.userId }, function (err, result) {
+        const newPostData = postData.toObject();
+        newPostData.userinfo = result[0];
+        newPostData.comments = commentData;
+        res.send(newPostData);
+      });
+    });
   });
 });
 
