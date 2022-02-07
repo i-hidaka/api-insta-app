@@ -32,7 +32,7 @@ const postSchema = mongoose.Schema({
   caption: String,
   prefecture: Object,
   postData: Date,
-  favorite: Array,
+  favorites: Array,
 });
 
 const commentSchema = mongoose.Schema({
@@ -127,7 +127,7 @@ router.post("/post", function (req, res) {
     post.caption = req.body.caption;
     post.prefecture = req.body.prefecture;
     post.postData = new Date();
-    post.favorite = [];
+    post.favorites = [];
     post.save();
     res.send({
       status: "success",
@@ -138,7 +138,7 @@ router.post("/post", function (req, res) {
         caption: post.caption,
         prefecture: post.prefecture,
         postData: post.postData,
-        favorite: post.favorite,
+        favorites: post.favorites,
       },
     });
   });
@@ -312,14 +312,14 @@ router.post("/setting", function (req, res) {
 // 投稿にいいねする
 router.post("/favorite", function (req, res) {
   postmodel.find({ postId: req.body.postId }, function (err, result) {
-    if (result[0].favorite.includes(req.body.userName) === true) {
+    if (result[0].favorites.includes(req.body.userName) === true) {
       res.send({
         status: "error",
         data: req.body,
         message: "既にいいねしています",
       });
     } else {
-      result[0].favorite.push(req.body.userName);
+      result[0].favorites.push(req.body.userName);
       result[0].save();
       res.send(result[0]);
     }
