@@ -285,16 +285,23 @@ router.post("/setting", function (req, res) {
       result[0].save();
       res.send({ status: "success", data: result[0] });
     } else {
-      // ユーザー名が既に存在したら弾く
+      // ユーザー名異なっていたら既に存在していないか検証
       usermodel.find(
         { userName: req.body.userName },
         function (err, nameResult) {
+          // 既に存在していたら弾く
           if (nameResult.length >= 1) {
             res.send({
               status: "error",
               data: req.body,
               message: "そのユーザー名は既に登録済みです",
             });
+          } else {
+            result[0].userName = req.body.userName;
+            result[0].icon = req.body.icon;
+            result[0].bio = req.body.bio;
+            result[0].save();
+            res.send({ status: "success", data: result[0] });
           }
         }
       );
