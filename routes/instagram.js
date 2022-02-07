@@ -104,9 +104,9 @@ router.post("/login", function (req, res) {
 const postSchema = mongoose.Schema({
   postId: Number,
   userId: Number,
-  imgUrl: String,
+  imgUrl: Array,
   caption: String,
-  prefecture: String,
+  prefecture: Object,
   postData: Date,
   favorite: Array,
 });
@@ -244,7 +244,7 @@ router.get("/home/:id", function (req, res) {
               }
             }
           }
-          console.log(newPostDatas);
+          // console.log(newPostDatas);
 
           // 投稿とユーザー情報が紐付いたものにコメントを紐付ける
           const completePosts = [];
@@ -261,7 +261,19 @@ router.get("/home/:id", function (req, res) {
             }
             completePosts.push(newPostData);
           }
-          // console.log(completePosts);
+          
+          // 投稿日でsort;
+          completePosts.sort(function (a, b) {
+            return a.postDate > b.posyDate ? 1 : -1;
+          });
+          // コメントの日付をsort
+          for (let data of completePosts) {
+            data.comments.sort(function (a, b) {
+              return a.commentDate > b.commentData ? 1 : -1;
+            });
+          }
+          // console.log(sortPostDate);
+
           res.send(completePosts);
         });
       });
