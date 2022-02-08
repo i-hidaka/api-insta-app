@@ -1,5 +1,4 @@
 var express = require("express");
-const { rethrow } = require("jade/lib/runtime");
 var router = express.Router();
 // ローカルのときは3000番　http://localhost:3000
 // デプロイ先　https://api-instagram-app.herokuapp.com/
@@ -355,7 +354,7 @@ router.get("/mypage/:id", function (req, res) {
 });
 
 // 名前でアカウント検索
-router.get("/search/account", function (req, res) {
+router.post("/search/account", function (req, res) {
   usermodel.find(
     // 検索欄の文字列を含むもの全て検索
     { userName: new RegExp(req.body.userName) },
