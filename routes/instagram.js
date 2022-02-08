@@ -447,8 +447,6 @@ router.post("/unfollow", function (req, res) {
         message: "対象をフォローしていません",
       });
       return;
-    } else if (req.body.targetUserId === null) {
-      res.send("nullになってるよー！！");
     } else {
       const index = result[0].follow.indexOf(req.body.targetUserId);
       result[0].follow.splice(index, 1);
@@ -636,5 +634,9 @@ router.post("/search/prefecture", function (req, res) {
     });
   });
 });
-
+router.get("/aaaa", function (req, res) {
+const date=new Date().toLocaleString({timeZone: 'Asia/Tokyo'})
+console.log(date);
+console.log(new Date(date));
+})
 module.exports = router;
