@@ -560,14 +560,15 @@ router.post("/search/caption", function (req, res) {
     });
   });
 });
-
+// 都道府県で検索
 router.post("/search/prefecture", function (req, res) {
   let posts = [];
   let users = [];
   let comments = [];
   async function getPosts() {
     await postmodel
-      .find({ "prefecture.name": new RegExp(req.body.prefecture) })
+      //RegExp(変数名,"gi")・・・ 大文字小文字を区別しない＆含み検索
+      .find({ "prefecture.name": new RegExp(req.body.prefecture, "gi") })
       .exec()
       .then((result) => {
         posts = result;
@@ -596,12 +597,40 @@ router.post("/search/prefecture", function (req, res) {
       });
   }
   getPosts().then((result) => {
+    // console.log(posts);
     getUsers().then((result) => {
       getComments().then((result) => {
+        const newPostData = [];
         for (let post of posts) {
           for (let user of users) {
+            if (post.userId === user.userId) {
+              const postData = post.toObject();
+              postData.userInfo = user;
+              newPostData.push(postData);
+            }
           }
         }
+        const completePosts = [];
+        for (let post of newPostData) {
+          post.comments = [];
+          for (let comment of comments) {
+            if (comment.postId === post.postId) {
+              post.comments.push(comment);
+            }
+          }
+          completePosts.push(post);
+        }
+        // 投稿日でsort;
+        completePosts.sort(function (a, b) {
+          return a.postDate > b.posyDate ? 1 : -1;
+        });
+        // コメントの日付をsort
+        for (let data of completePosts) {
+          data.comments.sort(function (a, b) {
+            return a.commentDate > b.commentData ? 1 : -1;
+          });
+        }
+        res.send(completePosts);
       });
     });
   });
