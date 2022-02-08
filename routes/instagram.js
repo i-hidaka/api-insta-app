@@ -502,10 +502,6 @@ router.post("/search/caption", function (req, res) {
       .find({ caption: new RegExp(req.body.caption) })
       .exec()
       .then((result) => {
-        if (result.length === 0) {
-          res.send({ status: "error", message: "検索結果がありませんでした" });
-          return;
-        }
         posts = result;
       });
   }
@@ -556,7 +552,11 @@ router.post("/search/caption", function (req, res) {
           }
           completePosts.push(newPost);
         }
-        res.send(completePosts);
+        if (completePosts.length === 0) {
+          res.send({ status: "error", message: "検索結果がありませんでした" });
+        } else {
+          res.send(completePosts);
+        }
       });
     });
   });
@@ -572,10 +572,6 @@ router.post("/search/prefecture", function (req, res) {
       .find({ "prefecture.name": new RegExp(req.body.prefecture, "gi") })
       .exec()
       .then((result) => {
-        if (result.length === 0) {
-          res.send({ status: "error", message: "検索結果がありませんでした" });
-          return;
-        }
         posts = result;
       });
   }
@@ -635,7 +631,11 @@ router.post("/search/prefecture", function (req, res) {
             return a.commentDate > b.commentData ? 1 : -1;
           });
         }
-        res.send(completePosts);
+        if (completePosts.length === 0) {
+          res.send({ status: "error", message: "検索結果がありませんでした" });
+        } else {
+          res.send(completePosts);
+        }
       });
     });
   });
