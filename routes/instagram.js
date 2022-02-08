@@ -632,6 +632,76 @@ router.post("/search/prefecture", function (req, res) {
     });
   });
 });
-
+// 全ての投稿を取得する
+router.get("/allposts", function (req, res) {
+  let posts = [];
+  let users = [];
+  let comments = [];
+  async function getallPosts() {
+    await postmodel
+      .find({})
+      .exec()
+      .then((result) => {
+        posts = result;
+      });
+  }
+  async function getallUsers() {
+    await usermodel
+      .find({})
+      .exec()
+      .then((result) => {
+        users = result;
+      });
+  }
+  async function getallComments() {
+    await commentmodel
+      .find({})
+      .exec()
+      .then((result) => {
+        comments = result;
+      });
+  }
+  getallPosts().then((result) => {
+    getallUsers().then((result) => {
+      getallComments().then((result) => {
+        // postsにユーザーを紐付け
+        const newPosts = [];
+        for (let post of posts) {
+          for (let user of users) {
+            if (post.userId === user.userId) {
+              const newpost = post.toObject();
+              newpost.userInfo = user;
+              newPosts.push(newpost);
+            }
+          }
+        }
+        const completePosts = [];
+        // コメントを紐付け
+        for (let newPost of newPosts) {
+          newPost.comments = [];
+          for (let comment of comments) {
+            if (newPost.postId === comment.postId) {
+              newPost.comments.push(comment);
+            }
+          }
+          completePosts.push(newPost);
+        }
+        // // 投稿の日付でsort
+        completePosts.sort((a, b) => {
+          return a.postDate > b.postDate ? 1 : -1;
+        });
+        // コメントの日付でsort
+        for (let post of completePosts) {
+          console.log(post);
+          post.comments.sort((a, b) => {
+            return a.commentDate > b.commentDate ? 1 : -1;
+          });
+        }
+        res.send(completePosts);
+        // console.log(completePosts);
+      });
+    });
+  });
+});
 
 module.exports = router;
