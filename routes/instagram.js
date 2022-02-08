@@ -125,7 +125,9 @@ router.post("/post", function (req, res) {
     post.imageUrl = req.body.imageUrl;
     post.caption = req.body.caption;
     post.prefecture = req.body.prefecture;
-    post.postData = new Date();
+    post.postData = new Date(
+      new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
+    );
     post.favorites = [];
     post.save();
     res.send({
@@ -151,7 +153,9 @@ router.post("/comment", function (req, res) {
     comment.postId = req.body.postId;
     comment.userId = req.body.userId;
     comment.comment = req.body.comment;
-    comment.commentDate = new Date();
+    comment.commentDate = new Date(
+      new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
+    );
     comment.save();
     res.send({
       status: "success",
@@ -183,14 +187,14 @@ router.get("/home/:id", function (req, res) {
   }
   // 自分のフォローしてる人の投稿取得
   async function getPost() {
-    for (let follow of userData.follow) {
-      await postmodel
-        .find({ userId: follow })
-        .exec()
-        .then((followResult) => {
-          postDatas.push(followResult);
-        });
-    }
+    // 自分のIDもいれちゃう
+    userData.follow.push(userData.userId);
+    await postmodel
+      .find({ userId: userData.follow })
+      .exec()
+      .then((followResult) => {
+        postDatas = followResult;
+      });
   }
   //   フォローしている人の情報取得
   async function getPostUser() {
@@ -203,19 +207,19 @@ router.get("/home/:id", function (req, res) {
   }
   // 投稿に紐付いたコメントを取得
   async function getComment() {
-    for (let userPosts of postDatas) {
-      for (let userPost of userPosts) {
-        await commentmodel
-          .find({ postId: userPost.postId })
-          .exec()
-          .then((commentResult) => {
-            commentDatas.push(commentResult);
-          });
-      }
+    for (let postData of postDatas) {
+      commentDatas.push(postData.postId);
     }
+    await commentmodel
+      .find({ postId: commentDatas })
+      .exec()
+      .then((commentResult) => {
+        commentDatas = commentResult;
+      });
   }
   //   自分のデータ取得
   getMyData().then((result) => {
+    // console.log(userData);
     // 自分のフォローしてる人の投稿取得
     getPost().then((result) => {
       //   フォローしている人の情報取得
@@ -226,35 +230,28 @@ router.get("/home/:id", function (req, res) {
           // console.log(commentDatas);
           const newPostDatas = [];
           // 投稿とユーザー情報を紐付ける
-          for (let userPostDatas of postDatas) {
-            for (let userPostData of userPostDatas) {
-              for (let followUserData of followUserDatas) {
-                if (userPostData.userId === followUserData.userId) {
-                  // mongooseで取得したオブジェクトはtoObjectで新しい変数に代入しないとプロパティの編集できない？
-                  const postData = userPostData.toObject();
-                  postData.userInfo = followUserData;
-                  newPostDatas.push(postData);
-                }
+          for (let postData of postDatas) {
+            for (let followUserData of followUserDatas) {
+              if (postData.userId === followUserData.userId) {
+                // mongooseで取得したオブジェクトはtoObjectで新しい変数に代入しないとプロパティの編集できない？
+                const postNewData = postData.toObject();
+                postNewData.userInfo = followUserData;
+                newPostDatas.push(postNewData);
               }
             }
           }
-          // console.log(newPostDatas);
-          // 投稿とユーザー情報が紐付いたものにコメントを紐付ける
+          // // 投稿とユーザー情報が紐付いたものにコメントを紐付ける
           const completePosts = [];
-          for (let newPostData of newPostDatas) {
-            // コメントを入れる空の配列を作成
-            newPostData.comments = [];
-            // comments・・・postIdごとに別れたコメントの配列
-            for (let comments of commentDatas) {
-              for (let comment of comments) {
-                if (newPostData.postId === comment.postId) {
-                  newPostData.comments.push(comment);
-                }
+          for (let newpostData of newPostDatas) {
+            //   // コメントを入れる空の配列を作成
+            newpostData.comments = [];
+            for (let commentData of commentDatas) {
+              if (commentData.postId === newpostData.postId) {
+                newpostData.comments.push(commentData);
               }
             }
-            completePosts.push(newPostData);
+            completePosts.push(newpostData);
           }
-
           // 投稿日でsort;
           completePosts.sort(function (a, b) {
             return a.postDate > b.posyDate ? 1 : -1;
@@ -265,7 +262,6 @@ router.get("/home/:id", function (req, res) {
               return a.commentDate > b.commentData ? 1 : -1;
             });
           }
-          // console.log(sortPostDate);
           res.send(completePosts);
         });
       });
@@ -317,6 +313,8 @@ router.post("/favorite", function (req, res) {
         data: req.body,
         message: "既にいいねしています",
       });
+    } else if (req.body.userName === null) {
+      res.send("nullになってるよー！！");
     } else {
       result[0].favorites.push(req.body.userName);
       result[0].save();
@@ -360,7 +358,7 @@ router.post("/search/account", function (req, res) {
     { userName: new RegExp(req.body.userName) },
     function (err, result) {
       if (result.length === 0) {
-        res.send({ message: "そのユーザー名は存在しません" });
+        res.send({ status: "error", message: "検索結果がありませんでした" });
       } else {
         res.send(result);
       }
@@ -554,7 +552,11 @@ router.post("/search/caption", function (req, res) {
           }
           completePosts.push(newPost);
         }
-        res.send(completePosts);
+        if (completePosts.length === 0) {
+          res.send({ status: "error", message: "検索結果がありませんでした" });
+        } else {
+          res.send(completePosts);
+        }
       });
     });
   });
@@ -629,14 +631,85 @@ router.post("/search/prefecture", function (req, res) {
             return a.commentDate > b.commentData ? 1 : -1;
           });
         }
-        res.send(completePosts);
+        if (completePosts.length === 0) {
+          res.send({ status: "error", message: "検索結果がありませんでした" });
+        } else {
+          res.send(completePosts);
+        }
       });
     });
   });
 });
-router.get("/aaaa", function (req, res) {
-const date=new Date().toLocaleString({timeZone: 'Asia/Tokyo'})
-console.log(date);
-console.log(new Date(date));
-})
+// 全ての投稿を取得する
+router.get("/allposts", function (req, res) {
+  let posts = [];
+  let users = [];
+  let comments = [];
+  async function getallPosts() {
+    await postmodel
+      .find({})
+      .exec()
+      .then((result) => {
+        posts = result;
+      });
+  }
+  async function getallUsers() {
+    await usermodel
+      .find({})
+      .exec()
+      .then((result) => {
+        users = result;
+      });
+  }
+  async function getallComments() {
+    await commentmodel
+      .find({})
+      .exec()
+      .then((result) => {
+        comments = result;
+      });
+  }
+  getallPosts().then((result) => {
+    getallUsers().then((result) => {
+      getallComments().then((result) => {
+        // postsにユーザーを紐付け
+        const newPosts = [];
+        for (let post of posts) {
+          for (let user of users) {
+            if (post.userId === user.userId) {
+              const newpost = post.toObject();
+              newpost.userInfo = user;
+              newPosts.push(newpost);
+            }
+          }
+        }
+        const completePosts = [];
+        // コメントを紐付け
+        for (let newPost of newPosts) {
+          newPost.comments = [];
+          for (let comment of comments) {
+            if (newPost.postId === comment.postId) {
+              newPost.comments.push(comment);
+            }
+          }
+          completePosts.push(newPost);
+        }
+        // // 投稿の日付でsort
+        completePosts.sort((a, b) => {
+          return a.postDate > b.postDate ? 1 : -1;
+        });
+        // コメントの日付でsort
+        for (let post of completePosts) {
+          console.log(post);
+          post.comments.sort((a, b) => {
+            return a.commentDate > b.commentDate ? 1 : -1;
+          });
+        }
+        res.send(completePosts);
+        // console.log(completePosts);
+      });
+    });
+  });
+});
+
 module.exports = router;
