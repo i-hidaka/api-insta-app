@@ -317,7 +317,7 @@ router.post("/favorite", function (req, res) {
         data: req.body,
         message: "既にいいねしています",
       });
-    } else if (req.body.useName === null) {
+    } else if (req.body.userName === null) {
       res.send("nullになってるよー！！");
     } else {
       result[0].favorites.push(req.body.userName);
