@@ -183,14 +183,14 @@ router.get("/home/:id", function (req, res) {
   }
   // 自分のフォローしてる人の投稿取得
   async function getPost() {
-    for (let follow of userData.follow) {
-      await postmodel
-        .find({ userId: follow })
-        .exec()
-        .then((followResult) => {
-          postDatas.push(followResult);
-        });
-    }
+    // 自分のIDもいれちゃう
+    userData.follow.push(userData.userId);
+    await postmodel
+      .find({ userId: userData.follow })
+      .exec()
+      .then((followResult) => {
+        postDatas = followResult;
+      });
   }
   //   フォローしている人の情報取得
   async function getPostUser() {
@@ -203,19 +203,19 @@ router.get("/home/:id", function (req, res) {
   }
   // 投稿に紐付いたコメントを取得
   async function getComment() {
-    for (let userPosts of postDatas) {
-      for (let userPost of userPosts) {
-        await commentmodel
-          .find({ postId: userPost.postId })
-          .exec()
-          .then((commentResult) => {
-            commentDatas.push(commentResult);
-          });
-      }
+    for (let postData of postDatas) {
+      commentDatas.push(postData.postId);
     }
+    await commentmodel
+      .find({ postId: commentDatas })
+      .exec()
+      .then((commentResult) => {
+        commentDatas = commentResult;
+      });
   }
   //   自分のデータ取得
   getMyData().then((result) => {
+    // console.log(userData);
     // 自分のフォローしてる人の投稿取得
     getPost().then((result) => {
       //   フォローしている人の情報取得
@@ -226,35 +226,28 @@ router.get("/home/:id", function (req, res) {
           // console.log(commentDatas);
           const newPostDatas = [];
           // 投稿とユーザー情報を紐付ける
-          for (let userPostDatas of postDatas) {
-            for (let userPostData of userPostDatas) {
-              for (let followUserData of followUserDatas) {
-                if (userPostData.userId === followUserData.userId) {
-                  // mongooseで取得したオブジェクトはtoObjectで新しい変数に代入しないとプロパティの編集できない？
-                  const postData = userPostData.toObject();
-                  postData.userInfo = followUserData;
-                  newPostDatas.push(postData);
-                }
+          for (let postData of postDatas) {
+            for (let followUserData of followUserDatas) {
+              if (postData.userId === followUserData.userId) {
+                // mongooseで取得したオブジェクトはtoObjectで新しい変数に代入しないとプロパティの編集できない？
+                const postNewData = postData.toObject();
+                postNewData.userInfo = followUserData;
+                newPostDatas.push(postNewData);
               }
             }
           }
-          // console.log(newPostDatas);
-          // 投稿とユーザー情報が紐付いたものにコメントを紐付ける
+          // // 投稿とユーザー情報が紐付いたものにコメントを紐付ける
           const completePosts = [];
-          for (let newPostData of newPostDatas) {
-            // コメントを入れる空の配列を作成
-            newPostData.comments = [];
-            // comments・・・postIdごとに別れたコメントの配列
-            for (let comments of commentDatas) {
-              for (let comment of comments) {
-                if (newPostData.postId === comment.postId) {
-                  newPostData.comments.push(comment);
-                }
+          for (let newpostData of newPostDatas) {
+            //   // コメントを入れる空の配列を作成
+            newpostData.comments = [];
+            for (let commentData of commentDatas) {
+              if (commentData.postId === newpostData.postId) {
+                newpostData.comments.push(commentData);
               }
             }
-            completePosts.push(newPostData);
+            completePosts.push(newpostData);
           }
-
           // 投稿日でsort;
           completePosts.sort(function (a, b) {
             return a.postDate > b.posyDate ? 1 : -1;
@@ -265,7 +258,6 @@ router.get("/home/:id", function (req, res) {
               return a.commentDate > b.commentData ? 1 : -1;
             });
           }
-          // console.log(sortPostDate);
           res.send(completePosts);
         });
       });
