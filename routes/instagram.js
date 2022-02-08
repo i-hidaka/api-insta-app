@@ -317,6 +317,8 @@ router.post("/favorite", function (req, res) {
         data: req.body,
         message: "既にいいねしています",
       });
+    } else if (req.body.useName === null) {
+      res.send("nullになってるよー！！");
     } else {
       result[0].favorites.push(req.body.userName);
       result[0].save();
@@ -635,8 +637,8 @@ router.post("/search/prefecture", function (req, res) {
   });
 });
 router.get("/aaaa", function (req, res) {
-const date=new Date().toLocaleString({timeZone: 'Asia/Tokyo'})
-console.log(date);
-console.log(new Date(date));
-})
+  const date = new Date().toLocaleString({ timeZone: "Asia/Tokyo" });
+  console.log(date);
+  console.log(new Date(date));
+});
 module.exports = router;
