@@ -556,7 +556,52 @@ router.post("/search/caption", function (req, res) {
           completePosts.push(newPost);
         }
         res.send(completePosts);
-        console.log(completePosts);
+      });
+    });
+  });
+});
+
+router.post("/search/prefecture", function (req, res) {
+  let posts = [];
+  let users = [];
+  let comments = [];
+  async function getPosts() {
+    await postmodel
+      .find({ "prefecture.name": new RegExp(req.body.prefecture) })
+      .exec()
+      .then((result) => {
+        posts = result;
+      });
+  }
+  async function getUsers() {
+    for (let post of posts) {
+      users.push(post.userId);
+    }
+    await usermodel
+      .find({ userId: users })
+      .exec()
+      .then((result) => {
+        users = result;
+      });
+  }
+  async function getComments() {
+    for (let post of posts) {
+      comments.push(post.postId);
+    }
+    await commentmodel
+      .find({ postId: comments })
+      .exec()
+      .then((result) => {
+        comments = result;
+      });
+  }
+  getPosts().then((result) => {
+    getUsers().then((result) => {
+      getComments().then((result) => {
+        for (let post of posts) {
+          for (let user of users) {
+          }
+        }
       });
     });
   });
