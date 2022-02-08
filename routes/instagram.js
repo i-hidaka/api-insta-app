@@ -125,7 +125,9 @@ router.post("/post", function (req, res) {
     post.imageUrl = req.body.imageUrl;
     post.caption = req.body.caption;
     post.prefecture = req.body.prefecture;
-    post.postData = new Date();
+    post.postData = new Date(
+      new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
+    );
     post.favorites = [];
     post.save();
     res.send({
@@ -151,7 +153,9 @@ router.post("/comment", function (req, res) {
     comment.postId = req.body.postId;
     comment.userId = req.body.userId;
     comment.comment = req.body.comment;
-    comment.commentDate = new Date();
+    comment.commentDate = new Date(
+      new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
+    );
     comment.save();
     res.send({
       status: "success",
@@ -628,9 +632,6 @@ router.post("/search/prefecture", function (req, res) {
     });
   });
 });
-router.get("/aaaa", function (req, res) {
-  const date = new Date().toLocaleString({ timeZone: "Asia/Tokyo" });
-  console.log(date);
-  console.log(new Date(date));
-});
+
+
 module.exports = router;
