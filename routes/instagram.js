@@ -358,7 +358,7 @@ router.post("/search/account", function (req, res) {
     { userName: new RegExp(req.body.userName) },
     function (err, result) {
       if (result.length === 0) {
-        res.send({ message: "そのユーザー名は存在しません" });
+        res.send({ status: "error", message: "検索結果がありませんでした" });
       } else {
         res.send(result);
       }
@@ -502,6 +502,10 @@ router.post("/search/caption", function (req, res) {
       .find({ caption: new RegExp(req.body.caption) })
       .exec()
       .then((result) => {
+        if (result.length === 0) {
+          res.send({ status: "error", message: "検索結果がありませんでした" });
+          return;
+        }
         posts = result;
       });
   }
@@ -568,6 +572,10 @@ router.post("/search/prefecture", function (req, res) {
       .find({ "prefecture.name": new RegExp(req.body.prefecture, "gi") })
       .exec()
       .then((result) => {
+        if (result.length === 0) {
+          res.send({ status: "error", message: "検索結果がありませんでした" });
+          return;
+        }
         posts = result;
       });
   }
