@@ -217,7 +217,7 @@ router.get("/home/:id", function (req, res) {
         commentDatas = commentResult;
       });
   }
-  if (req.params.id === "undefined") {
+  if (req.params.id === "undefined" || req.params.id === "null") {
     res.send("undefineになってますがな！！");
   } else {
     //   自分のデータ取得
@@ -346,7 +346,7 @@ router.get("/mypage/:id", function (req, res) {
         post = result;
       });
   }
-  if (req.params.id === "undefined") {
+  if (req.params.id === "undefined" || req.params.id === "null") {
     res.send("undefineになってますがな！！");
   } else {
     getUser().then((result) => {
@@ -407,7 +407,7 @@ router.get("/followinfo/:id", function (req, res) {
         });
     }
   }
-  if (req.params.id === "undefined") {
+  if (req.params.id === "undefined" || req.params.id === "null") {
     res.send("undefineになってますがな！！");
   } else {
     getfollowUser().then((result) => {
@@ -490,7 +490,7 @@ router.get("/postdetail/:id", function (req, res) {
         commentData = result;
       });
   }
-  if (req.params.id === "undefined") {
+  if (req.params.id === "undefined" ||req.params.id ==="null") {
     res.send("undefineになってますがな！！");
   } else {
     getPostDetail().then((result) => {
