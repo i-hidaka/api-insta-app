@@ -706,7 +706,6 @@ router.get("/allposts", function (req, res) {
           });
         }
         res.send(completePosts);
-        // console.log(completePosts);
       });
     });
   });
