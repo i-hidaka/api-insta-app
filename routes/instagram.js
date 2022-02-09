@@ -325,6 +325,23 @@ router.post("/favorite", function (req, res) {
   });
 });
 
+// いいね解除する
+router.post("/unfavorite", function (req, res) {
+  postmodel.find({ postId: req.body.postId }, function (err, result) {
+    if (result[0].favorites.includes(req.body.userName) === true) {
+      const index = result[0].favorites.indexOf(req.body.userName);
+      result[0].favorites.splice(index, 1);
+      result[0].save();
+      res.send(result[0]);
+    } else {
+      res.send({
+        status: "error",
+        data: req.body,
+        message: "いいねしてません",
+      });
+    }
+  });
+});
 // ユーザーページ
 router.get("/mypage/:id", function (req, res) {
   let user = "";
@@ -430,17 +447,20 @@ router.post("/follow", function (req, res) {
         data: req.body,
         message: "既にフォローリストに入っています",
       });
-      return;
     } else {
+      // 自分のフォローリストに追加
       result[0].follow.push(req.body.targetUserId);
       result[0].save();
+      // 相手のフォロワーに追加
+      usermodel.find(
+        { userId: req.body.targetUserId },
+        function (err, followerResult) {
+          followerResult[0].follower.push(req.body.userId);
+          followerResult[0].save();
+        }
+      );
       res.send(result[0]);
     }
-  });
-  // 対象のフォロワーリストに追加
-  usermodel.find({ userId: req.body.targetUserId }, function (err, result) {
-    result[0].follower.push(req.body.userId);
-    result[0].save();
   });
 });
 
@@ -454,19 +474,21 @@ router.post("/unfollow", function (req, res) {
         data: req.body,
         message: "対象をフォローしていません",
       });
-      return;
     } else {
       const index = result[0].follow.indexOf(req.body.targetUserId);
       result[0].follow.splice(index, 1);
       result[0].save();
+      // 対象のフォロワーリストから削除
+      usermodel.find(
+        { userId: req.body.targetUserId },
+        function (err, followerResult) {
+          const index = followerResult[0].follower.indexOf(req.body.userId);
+          followerResult[0].follower.splice(index, 1);
+          followerResult[0].save();
+        }
+      );
       res.send(result[0]);
     }
-  });
-  // 対象のフォロワーリストから削除
-  usermodel.find({ userId: req.body.targetUserId }, function (err, result) {
-    const index = result[0].follower.indexOf(req.body.userId);
-    result[0].follower.splice(index, 1);
-    result[0].save();
   });
 });
 
@@ -490,7 +512,7 @@ router.get("/postdetail/:id", function (req, res) {
         commentData = result;
       });
   }
-  if (req.params.id === "undefined" ||req.params.id ==="null") {
+  if (req.params.id === "undefined" || req.params.id === "null") {
     res.send("undefineになってますがな！！");
   } else {
     getPostDetail().then((result) => {
@@ -723,5 +745,4 @@ router.get("/allposts", function (req, res) {
     });
   });
 });
-
 module.exports = router;
