@@ -217,56 +217,60 @@ router.get("/home/:id", function (req, res) {
         commentDatas = commentResult;
       });
   }
-  //   自分のデータ取得
-  getMyData().then((result) => {
-    // console.log(userData);
-    // 自分のフォローしてる人の投稿取得
-    getPost().then((result) => {
-      //   フォローしている人の情報取得
-      // console.log(postDatas);
-      getPostUser().then((result) => {
-        // 投稿に紐付いたコメントを取得
-        getComment().then((result) => {
-          // console.log(commentDatas);
-          const newPostDatas = [];
-          // 投稿とユーザー情報を紐付ける
-          for (let postData of postDatas) {
-            for (let followUserData of followUserDatas) {
-              if (postData.userId === followUserData.userId) {
-                // mongooseで取得したオブジェクトはtoObjectで新しい変数に代入しないとプロパティの編集できない？
-                const postNewData = postData.toObject();
-                postNewData.userInfo = followUserData;
-                newPostDatas.push(postNewData);
+  if (req.params.id === "undefined") {
+    res.send("undefineになってますがな！！");
+  } else {
+    //   自分のデータ取得
+    getMyData().then((result) => {
+      // console.log(userData);
+      // 自分のフォローしてる人の投稿取得
+      getPost().then((result) => {
+        //   フォローしている人の情報取得
+        // console.log(postDatas);
+        getPostUser().then((result) => {
+          // 投稿に紐付いたコメントを取得
+          getComment().then((result) => {
+            // console.log(commentDatas);
+            const newPostDatas = [];
+            // 投稿とユーザー情報を紐付ける
+            for (let postData of postDatas) {
+              for (let followUserData of followUserDatas) {
+                if (postData.userId === followUserData.userId) {
+                  // mongooseで取得したオブジェクトはtoObjectで新しい変数に代入しないとプロパティの編集できない？
+                  const postNewData = postData.toObject();
+                  postNewData.userInfo = followUserData;
+                  newPostDatas.push(postNewData);
+                }
               }
             }
-          }
-          // // 投稿とユーザー情報が紐付いたものにコメントを紐付ける
-          const completePosts = [];
-          for (let newpostData of newPostDatas) {
-            //   // コメントを入れる空の配列を作成
-            newpostData.comments = [];
-            for (let commentData of commentDatas) {
-              if (commentData.postId === newpostData.postId) {
-                newpostData.comments.push(commentData);
+            // // 投稿とユーザー情報が紐付いたものにコメントを紐付ける
+            const completePosts = [];
+            for (let newpostData of newPostDatas) {
+              //   // コメントを入れる空の配列を作成
+              newpostData.comments = [];
+              for (let commentData of commentDatas) {
+                if (commentData.postId === newpostData.postId) {
+                  newpostData.comments.push(commentData);
+                }
               }
+              completePosts.push(newpostData);
             }
-            completePosts.push(newpostData);
-          }
-          // 投稿日でsort;
-          completePosts.sort(function (a, b) {
-            return a.postDate > b.posyDate ? 1 : -1;
-          });
-          // コメントの日付をsort
-          for (let data of completePosts) {
-            data.comments.sort(function (a, b) {
-              return a.commentDate > b.commentData ? 1 : -1;
+            // 投稿日でsort;
+            completePosts.sort(function (a, b) {
+              return a.postDate > b.posyDate ? 1 : -1;
             });
-          }
-          res.send(completePosts);
+            // コメントの日付をsort
+            for (let data of completePosts) {
+              data.comments.sort(function (a, b) {
+                return a.commentDate > b.commentData ? 1 : -1;
+              });
+            }
+            res.send(completePosts);
+          });
         });
       });
     });
-  });
+  }
 });
 
 // ユーザー情報変更
@@ -342,11 +346,15 @@ router.get("/mypage/:id", function (req, res) {
         post = result;
       });
   }
-  getUser().then((result) => {
-    getPost().then((result) => {
-      res.send({ user: user, post: post });
+  if (req.params.id === "undefined") {
+    res.send("undefineになってますがな！！");
+  } else {
+    getUser().then((result) => {
+      getPost().then((result) => {
+        res.send({ user: user, post: post });
+      });
     });
-  });
+  }
 });
 
 // 名前でアカウント検索
@@ -399,13 +407,17 @@ router.get("/followinfo/:id", function (req, res) {
         });
     }
   }
-  getfollowUser().then((result) => {
-    getfollowinfo().then((result) => {
-      getfollowerinfo().then((result) => {
-        res.send({ follow: followinfo, follower: followerinfo });
+  if (req.params.id === "undefined") {
+    res.send("undefineになってますがな！！");
+  } else {
+    getfollowUser().then((result) => {
+      getfollowinfo().then((result) => {
+        getfollowerinfo().then((result) => {
+          res.send({ follow: followinfo, follower: followerinfo });
+        });
       });
     });
-  });
+  }
 });
 
 // フォローする
@@ -478,16 +490,20 @@ router.get("/postdetail/:id", function (req, res) {
         commentData = result;
       });
   }
-  getPostDetail().then((result) => {
-    getComment().then((result) => {
-      usermodel.find({ userId: postData.userId }, function (err, result) {
-        const newPostData = postData.toObject();
-        newPostData.userinfo = result[0];
-        newPostData.comments = commentData;
-        res.send(newPostData);
+  if (req.params.id === "undefined") {
+    res.send("undefineになってますがな！！");
+  } else {
+    getPostDetail().then((result) => {
+      getComment().then((result) => {
+        usermodel.find({ userId: postData.userId }, function (err, result) {
+          const newPostData = postData.toObject();
+          newPostData.userinfo = result[0];
+          newPostData.comments = commentData;
+          res.send(newPostData);
+        });
       });
     });
-  });
+  }
 });
 // 投稿内容で検索する
 router.post("/search/caption", function (req, res) {
