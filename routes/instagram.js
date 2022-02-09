@@ -700,7 +700,6 @@ router.get("/allposts", function (req, res) {
         });
         // コメントの日付でsort
         for (let post of completePosts) {
-          console.log(post);
           post.comments.sort((a, b) => {
             return a.commentDate > b.commentDate ? 1 : -1;
           });
