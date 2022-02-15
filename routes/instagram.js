@@ -37,7 +37,7 @@ const postSchema = mongoose.Schema({
 const commentSchema = mongoose.Schema({
   commentId: Number,
   postId: Number,
-  userID: Number,
+  userId: Number,
   comment: String,
   commentDate: Date,
 });
@@ -496,6 +496,9 @@ router.post("/unfollow", function (req, res) {
 router.get("/postdetail/:id", function (req, res) {
   let postData = "";
   let commentData = "";
+  let userInfo = "";
+  let commentUserInfo = "";
+
   async function getPostDetail() {
     await postmodel
       .find({ postId: req.params.id })
@@ -512,16 +515,52 @@ router.get("/postdetail/:id", function (req, res) {
         commentData = result;
       });
   }
+  async function getUserInfo() {
+    await usermodel
+      .find({ userId: postData.userId })
+      .exec()
+      .then((result) => {
+        userInfo = result[0];
+      });
+  }
+  async function getCommentUserInfo() {
+    let commentUserIds = [];
+    for (let comment of commentData) {
+      commentUserIds.push(comment.userId);
+    }
+
+    await usermodel
+      .find({ userId: commentUserIds })
+      .exec()
+      .then((result) => {
+        commentUserInfo = result;
+      });
+  }
+
   if (req.params.id === "undefined" || req.params.id === "null") {
-    res.send("undefineになってますがな！！");
+    res.send("undefineだよー");
   } else {
     getPostDetail().then((result) => {
       getComment().then((result) => {
-        usermodel.find({ userId: postData.userId }, function (err, result) {
-          const newPostData = postData.toObject();
-          newPostData.userinfo = result[0];
-          newPostData.comments = commentData;
-          res.send(newPostData);
+        getUserInfo().then((result) => {
+          getCommentUserInfo().then((result) => {
+            const newPostData = postData.toObject();
+            // 投稿にユーザー情報を紐付け
+            newPostData.userinfo = userInfo;
+            // コメントにユーザー情報紐付け
+            const newCommentData = [];
+            for (let comment of commentData) {
+              let newComment = comment.toObject();
+              for (let commentUser of commentUserInfo) {
+                if (comment.userId === commentUser.userId) {
+                  newComment.userInfo = commentUser;
+                }
+              }
+              newCommentData.push(newComment);
+            }
+            newPostData.comments = newCommentData;
+            res.send(newPostData);
+          });
         });
       });
     });
