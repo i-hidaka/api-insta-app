@@ -47,7 +47,7 @@ const logSchema = mongoose.Schema({
   contents: Object,
   date: Date,
   informUserId: Number,
-  cheked:Boolean
+  cheked: Boolean,
 });
 const usermodel = mongoose.model("users", userSchema);
 const postmodel = mongoose.model("posts", postSchema);
@@ -134,9 +134,7 @@ router.post("/post", function (req, res) {
     post.imageUrl = req.body.imageUrl;
     post.caption = req.body.caption;
     post.prefecture = req.body.prefecture;
-    post.postData = new Date(
-      new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
-    );
+    post.postData = new Date();
     post.favorites = [];
     post.save();
     res.send({
@@ -162,9 +160,7 @@ router.post("/comment", function (req, res) {
     comment.postId = req.body.postId;
     comment.userId = req.body.userId;
     comment.comment = req.body.comment;
-    comment.commentDate = new Date(
-      new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
-    );
+    comment.commentDate = new Date();
     comment.save();
     res.send({
       status: "success",
@@ -182,9 +178,7 @@ router.post("/comment", function (req, res) {
         const log = new logmodel();
         log.logId = result[result.length - 1].logId + 1;
         log.type = "comment";
-        log.date = new Date(
-          new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
-        );
+        log.date = new Date();
         log.contents = {
           newUser: comment.userId,
           postId: comment.postId,
@@ -192,7 +186,7 @@ router.post("/comment", function (req, res) {
         };
         // 通知するべき人のID
         log.informUserId = postResult[0].userId;
-        log.cheked=false
+        log.cheked = false;
         log.save();
       });
     });
@@ -355,9 +349,7 @@ router.post("/favorite", function (req, res) {
         const log = new logmodel();
         log.logId = logResult[logResult.length - 1].logId + 1;
         log.type = "favorite";
-        log.date = new Date(
-          new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
-        );
+        log.date = new Date();
         log.contents = {
           newUser: result[0].favorites[result[0].favorites.length - 1],
           postId: req.body.postId,
@@ -365,7 +357,7 @@ router.post("/favorite", function (req, res) {
         };
         // 通知するべき人のID
         log.informUserId = result[0].userId;
-        log.cheked=false
+        log.cheked = false;
         log.save();
       });
     }
@@ -510,9 +502,7 @@ router.post("/follow", function (req, res) {
             const log = new logmodel();
             log.logId = logResult[logResult.length - 1].logId + 1;
             log.type = "follow";
-            log.date = new Date(
-              new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
-            );
+            log.date = new Date();
             log.contents = {
               newUser:
                 followerResult[0].follower[
@@ -523,7 +513,7 @@ router.post("/follow", function (req, res) {
             };
             // 通知するべき人のID
             log.informUserId = req.body.targetUserId;
-            log.cheked=false
+            log.cheked = false;
             log.save();
           });
         }
