@@ -910,6 +910,9 @@ router.get("/notice/:id", function (req, res) {
         }
         newlogs.push(newlog);
       }
+      newlogs.sort(function (a, b) {
+        return a.date > b.date ? 1 : -1;
+      });
       res.send(newlogs);
     });
   });
