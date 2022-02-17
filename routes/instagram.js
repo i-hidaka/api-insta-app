@@ -47,6 +47,7 @@ const logSchema = mongoose.Schema({
   contents: Object,
   date: Date,
   informUserId: Number,
+  cheked:Boolean
 });
 const usermodel = mongoose.model("users", userSchema);
 const postmodel = mongoose.model("posts", postSchema);
@@ -191,6 +192,7 @@ router.post("/comment", function (req, res) {
         };
         // 通知するべき人のID
         log.informUserId = postResult[0].userId;
+        log.cheked=false
         log.save();
       });
     });
@@ -363,6 +365,7 @@ router.post("/favorite", function (req, res) {
         };
         // 通知するべき人のID
         log.informUserId = result[0].userId;
+        log.cheked=false
         log.save();
       });
     }
@@ -520,6 +523,7 @@ router.post("/follow", function (req, res) {
             };
             // 通知するべき人のID
             log.informUserId = req.body.targetUserId;
+            log.cheked=false
             log.save();
           });
         }
@@ -911,7 +915,7 @@ router.get("/notice/:id", function (req, res) {
         newlogs.push(newlog);
       }
       newlogs.sort(function (a, b) {
-        return a.date > b.date ? 1 : -1;
+        return a.date < b.date ? 1 : -1;
       });
       res.send(newlogs);
     });
