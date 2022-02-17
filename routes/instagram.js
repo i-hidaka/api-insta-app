@@ -47,13 +47,14 @@ const logSchema = mongoose.Schema({
   contents: Object,
   date: Date,
   informUserId: Number,
-  cheked: Boolean,
+  checked: Boolean,
 });
 const usermodel = mongoose.model("users", userSchema);
 const postmodel = mongoose.model("posts", postSchema);
 const commentmodel = mongoose.model("comments", commentSchema);
 const logmodel = mongoose.model("logs", logSchema);
 
+// new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
 // 会員登録する
 router.post("/signup", function (req, res) {
   //   全件取得した後、一番最後のIDを取得（自動採番）
@@ -186,7 +187,7 @@ router.post("/comment", function (req, res) {
         };
         // 通知するべき人のID
         log.informUserId = postResult[0].userId;
-        log.cheked = false;
+        log.checked = false;
         log.save();
       });
     });
@@ -357,7 +358,7 @@ router.post("/favorite", function (req, res) {
         };
         // 通知するべき人のID
         log.informUserId = result[0].userId;
-        log.cheked = false;
+        log.checked = false;
         log.save();
       });
     }
@@ -513,7 +514,7 @@ router.post("/follow", function (req, res) {
             };
             // 通知するべき人のID
             log.informUserId = req.body.targetUserId;
-            log.cheked = false;
+            log.checked = false;
             log.save();
           });
         }
