@@ -246,15 +246,12 @@ router.get("/home/:id", function (req, res) {
   } else {
     //   自分のデータ取得
     getMyData().then((result) => {
-      // console.log(userData);
       // 自分のフォローしてる人の投稿取得
       getPost().then((result) => {
         //   フォローしている人の情報取得
-        // console.log(postDatas);
         getPostUser().then((result) => {
           // 投稿に紐付いたコメントを取得
           getComment().then((result) => {
-            // console.log(commentDatas);
             const newPostDatas = [];
             // 投稿とユーザー情報を紐付ける
             for (let postData of postDatas) {
@@ -662,9 +659,7 @@ router.post("/search/caption", function (req, res) {
       });
   }
   getPost().then((result) => {
-    // console.log(posts);
     getUser().then((result) => {
-      // console.log(userInfos);
       getComment().then((result) => {
         const newPosts = [];
         for (let post of posts) {
@@ -732,7 +727,6 @@ router.post("/search/prefecture", function (req, res) {
       });
   }
   getPosts().then((result) => {
-    // console.log(posts);
     getUsers().then((result) => {
       getComments().then((result) => {
         const newPostData = [];
@@ -886,7 +880,6 @@ router.get("/notice/:id", function (req, res) {
       });
   }
   getlog().then((result) => {
-    console.log(logs);
     getUser().then((result) => {
       const newlogs = [];
       for (let log of logs) {
