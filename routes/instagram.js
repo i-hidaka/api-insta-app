@@ -53,16 +53,6 @@ const postmodel = mongoose.model("posts", postSchema);
 const commentmodel = mongoose.model("comments", commentSchema);
 const logmodel = mongoose.model("logs", logSchema);
 
-// ユーザーごとの履歴を出したい
-router.get("/realtime", function (req, res) {
-  usermodel.watch().on("change", (data) =>
-    res.send({
-      data: data,
-      date: new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9),
-    })
-  );
-});
-
 // 会員登録する
 router.post("/signup", function (req, res) {
   //   全件取得した後、一番最後のIDを取得（自動採番）
@@ -521,7 +511,10 @@ router.post("/follow", function (req, res) {
               new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
             );
             log.contents = {
-              newUser: followerResult[0].follower[followerResult[0].follower.length - 1],
+              newUser:
+                followerResult[0].follower[
+                  followerResult[0].follower.length - 1
+                ],
               postId: "",
               comment: "",
             };
@@ -856,9 +849,69 @@ router.get("/allposts", function (req, res) {
   });
 });
 
+// 通知を受け取る
 router.get("/notice/:id", function (req, res) {
-  logmodel.find({ informUserId: req.params.id }, function (err, result) {
-    res.send(result);
+  let logs = "";
+  let users = [];
+  let commentFollowUsers = [];
+  let favoriteusers = [];
+  // ログを取得
+  async function getlog() {
+    await logmodel
+      .find({ informUserId: req.params.id })
+      .exec()
+      .then((result) => {
+        logs = result;
+      });
+  }
+  // ログの中のユーザーを検索
+  async function getUser() {
+    for (let log of logs) {
+      if (typeof log.contents.newUser === "string") {
+        favoriteusers.push(log.contents.newUser);
+      } else {
+        commentFollowUsers.push(log.contents.newUser);
+      }
+    }
+    // IDで検索
+    await usermodel
+      .find({ userId: commentFollowUsers })
+      .exec()
+      .then((result) => {
+        users = result;
+      });
+    // 名前で検索
+    await usermodel
+      .find({ userName: favoriteusers })
+      .exec()
+      .then((results) => {
+        for (let result of results) {
+          users.push(result);
+        }
+      });
+  }
+  getlog().then((result) => {
+    console.log(logs);
+    getUser().then((result) => {
+      const newlogs = [];
+      for (let log of logs) {
+        let newlog = log.toObject();
+        for (let user of users) {
+          // いいねのときは名前で検索
+          if (newlog.type === "favorite") {
+            if (newlog.contents.newUser === user.userName) {
+              newlog.contents.newUser = user;
+            }
+          } else {
+            if (newlog.contents.newUser === user.userId) {
+              newlog.contents.newUser = user;
+            }
+          }
+        }
+        newlogs.push(newlog);
+      }
+      res.send(newlogs);
+    });
   });
 });
 module.exports = router;
