@@ -41,9 +41,27 @@ const commentSchema = mongoose.Schema({
   comment: String,
   commentDate: Date,
 });
+const logSchema = mongoose.Schema({
+  logId: Number,
+  type: String,
+  contents: Object,
+  date: Date,
+  informUserId: Number,
+});
 const usermodel = mongoose.model("users", userSchema);
 const postmodel = mongoose.model("posts", postSchema);
 const commentmodel = mongoose.model("comments", commentSchema);
+const logmodel = mongoose.model("logs", logSchema);
+
+// ユーザーごとの履歴を出したい
+router.get("/realtime", function (req, res) {
+  usermodel.watch().on("change", (data) =>
+    res.send({
+      data: data,
+      date: new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9),
+    })
+  );
+});
 
 // 会員登録する
 router.post("/signup", function (req, res) {
@@ -166,6 +184,21 @@ router.post("/comment", function (req, res) {
         comment: comment.comment,
         commentDate: comment.commentDate,
       },
+    });
+    // ログに残す
+    logmodel.find({}, function (err, result) {
+      postmodel.find({ postId: req.body.postId }, function (err, postResult) {
+        const log = new logmodel();
+        log.logId = result[result.length - 1].logId + 1;
+        log.type = "comment";
+        log.date = new Date(
+          new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
+        );
+        log.contents = comment;
+        // 通知するべき人のID
+        log.informUserId = postResult[0].userId;
+        log.save();
+      });
     });
   });
 });
@@ -321,6 +354,19 @@ router.post("/favorite", function (req, res) {
       result[0].favorites.push(req.body.userName);
       result[0].save();
       res.send(result[0]);
+      // ログに残す
+      logmodel.find({}, function (err, logResult) {
+        const log = new logmodel();
+        log.logId = logResult[logResult.length - 1].logId + 1;
+        log.type = "favorite";
+        log.date = new Date(
+          new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
+        );
+        log.contents = result[0];
+        // 通知するべき人のID
+        log.informUserId = result[0].userId;
+        log.save();
+      });
     }
   });
 });
@@ -457,9 +503,22 @@ router.post("/follow", function (req, res) {
         function (err, followerResult) {
           followerResult[0].follower.push(req.body.userId);
           followerResult[0].save();
+          res.send(result[0]);
+          // ログに残す
+          logmodel.find({}, function (err, logResult) {
+            const log = new logmodel();
+            log.logId = logResult[logResult.length - 1].logId + 1;
+            log.type = "follow";
+            log.date = new Date(
+              new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
+            );
+            log.contents = followerResult[0];
+            // 通知するべき人のID
+            log.informUserId = req.body.targetUserId;
+            log.save();
+          });
         }
       );
-      res.send(result[0]);
     }
   });
 });
@@ -782,6 +841,12 @@ router.get("/allposts", function (req, res) {
         res.send(completePosts);
       });
     });
+  });
+});
+
+router.get("/notice/:id", function (req, res) {
+  logmodel.find({ informUserId: req.params.id }, function (err, result) {
+    res.send(result);
   });
 });
 module.exports = router;
