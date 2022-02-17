@@ -912,4 +912,15 @@ router.get("/notice/:id", function (req, res) {
     });
   });
 });
+
+// 通知を見たかどうかのフラッグを上げる
+router.post("/notice/checked", function (req, res) {
+  logmodel.find({ informUserId: req.body.userId }, function (err, results) {
+    for (let result of results) {
+      result.checked = true;
+      result.save();
+    }
+    res.send(results);
+  });
+});
 module.exports = router;
