@@ -194,7 +194,11 @@ router.post("/comment", function (req, res) {
         log.date = new Date(
           new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
         );
-        log.contents = comment;
+        log.contents = {
+          newUser: comment.userId,
+          postId: comment.postId,
+          comment: comment.comment,
+        };
         // 通知するべき人のID
         log.informUserId = postResult[0].userId;
         log.save();
@@ -362,7 +366,11 @@ router.post("/favorite", function (req, res) {
         log.date = new Date(
           new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
         );
-        log.contents = result[0];
+        log.contents = {
+          newUser: result[0].favorites[result[0].favorites.length - 1],
+          postId: req.body.postId,
+          comment: "",
+        };
         // 通知するべき人のID
         log.informUserId = result[0].userId;
         log.save();
@@ -512,7 +520,11 @@ router.post("/follow", function (req, res) {
             log.date = new Date(
               new Date().setTime(new Date().getTime() + 1000 * 60 * 60 * 9)
             );
-            log.contents = followerResult[0];
+            log.contents = {
+              newUser: followerResult[0].follower[followerResult[0].follower.length - 1],
+              postId: "",
+              comment: "",
+            };
             // 通知するべき人のID
             log.informUserId = req.body.targetUserId;
             log.save();
