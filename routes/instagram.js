@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
-// ローカルのときは3000番　http://localhost:3000
+// ローカルのときは3000番　http://localhost:5000
 // デプロイ先　https://api-instagram-app.herokuapp.com/
 const mongoose = require("mongoose");
 
@@ -924,6 +924,12 @@ router.post("/notice/checked", function (req, res) {
         logmodel.remove({ logId: result.logId });
       }
     }
+  });
+});
+// 全てのユーザー
+router.get("/alluser", function (req, res) {
+  usermodel.find({}, function (err, result) {
+    res.send(result);
   });
 });
 module.exports = router;
