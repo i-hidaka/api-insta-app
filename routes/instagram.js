@@ -915,5 +915,15 @@ router.post("/notice/checked", function (req, res) {
     }
     res.send(results);
   });
+  // 今から7日過ぎたら履歴からデータを消す
+  logmodel.find({}, function (err, results) {
+    for (let result of results) {
+      if (
+        result.date < new Date(new Date().setDate(new Date().getDate() - 7))
+      ) {
+        logmodel.remove({ logId: result.logId });
+      }
+    }
+  });
 });
 module.exports = router;
