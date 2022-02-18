@@ -927,7 +927,7 @@ router.post("/notice/checked", function (req, res) {
   });
 });
 // 全てのユーザー
-router.get("/alluser", function (req, res) {
+router.get("/allusers", function (req, res) {
   usermodel.find({}, function (err, result) {
     res.send(result);
   });
