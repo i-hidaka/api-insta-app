@@ -538,9 +538,11 @@ router.post("/unfollow", function (req, res) {
       usermodel.find(
         { userId: req.body.targetUserId },
         function (err, followerResult) {
-          const index = followerResult[0].follower.indexOf(req.body.userId);
-          followerResult[0].follower.splice(index, 1);
-          followerResult[0].save();
+          if (followerResult.length !== 0) {
+            const index = followerResult[0].follower.indexOf(req.body.userId);
+            followerResult[0].follower.splice(index, 1);
+            followerResult[0].save();
+          }
         }
       );
       res.send(result[0]);
