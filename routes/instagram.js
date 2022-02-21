@@ -242,54 +242,58 @@ router.get("/home/:id", function (req, res) {
       });
   }
   if (req.params.id === "undefined" || req.params.id === "null") {
-    res.send("undefineになってますがな！！");
+    res.send("undefineだよー");
   } else {
     //   自分のデータ取得
     getMyData().then((result) => {
-      // 自分のフォローしてる人の投稿取得
-      getPost().then((result) => {
-        //   フォローしている人の情報取得
-        getPostUser().then((result) => {
-          // 投稿に紐付いたコメントを取得
-          getComment().then((result) => {
-            const newPostDatas = [];
-            // 投稿とユーザー情報を紐付ける
-            for (let postData of postDatas) {
-              for (let followUserData of followUserDatas) {
-                if (postData.userId === followUserData.userId) {
-                  // mongooseで取得したオブジェクトはtoObjectで新しい変数に代入しないとプロパティの編集できない？
-                  const postNewData = postData.toObject();
-                  postNewData.userInfo = followUserData;
-                  newPostDatas.push(postNewData);
+      if (userData === undefined) {
+        res.send("そのユーザーいないよ");
+      } else {
+        // 自分のフォローしてる人の投稿取得
+        getPost().then((result) => {
+          //   フォローしている人の情報取得
+          getPostUser().then((result) => {
+            // 投稿に紐付いたコメントを取得
+            getComment().then((result) => {
+              const newPostDatas = [];
+              // 投稿とユーザー情報を紐付ける
+              for (let postData of postDatas) {
+                for (let followUserData of followUserDatas) {
+                  if (postData.userId === followUserData.userId) {
+                    // mongooseで取得したオブジェクトはtoObjectで新しい変数に代入しないとプロパティの編集できない？
+                    const postNewData = postData.toObject();
+                    postNewData.userInfo = followUserData;
+                    newPostDatas.push(postNewData);
+                  }
                 }
               }
-            }
-            // // 投稿とユーザー情報が紐付いたものにコメントを紐付ける
-            const completePosts = [];
-            for (let newpostData of newPostDatas) {
-              //   // コメントを入れる空の配列を作成
-              newpostData.comments = [];
-              for (let commentData of commentDatas) {
-                if (commentData.postId === newpostData.postId) {
-                  newpostData.comments.push(commentData);
+              // // 投稿とユーザー情報が紐付いたものにコメントを紐付ける
+              const completePosts = [];
+              for (let newpostData of newPostDatas) {
+                //   // コメントを入れる空の配列を作成
+                newpostData.comments = [];
+                for (let commentData of commentDatas) {
+                  if (commentData.postId === newpostData.postId) {
+                    newpostData.comments.push(commentData);
+                  }
                 }
+                completePosts.push(newpostData);
               }
-              completePosts.push(newpostData);
-            }
-            // 投稿日でsort;
-            completePosts.sort(function (a, b) {
-              return a.postDate > b.posyDate ? 1 : -1;
-            });
-            // コメントの日付をsort
-            for (let data of completePosts) {
-              data.comments.sort(function (a, b) {
-                return a.commentDate > b.commentData ? 1 : -1;
+              // 投稿日でsort;
+              completePosts.sort(function (a, b) {
+                return a.postDate > b.posyDate ? 1 : -1;
               });
-            }
-            res.send(completePosts);
+              // コメントの日付をsort
+              for (let data of completePosts) {
+                data.comments.sort(function (a, b) {
+                  return a.commentDate > b.commentData ? 1 : -1;
+                });
+              }
+              res.send(completePosts);
+            });
           });
         });
-      });
+      }
     });
   }
 });
@@ -401,12 +405,16 @@ router.get("/mypage/:id", function (req, res) {
       });
   }
   if (req.params.id === "undefined" || req.params.id === "null") {
-    res.send("undefineになってますがな！！");
+    res.send("undefineだよー");
   } else {
     getUser().then((result) => {
-      getPost().then((result) => {
-        res.send({ user: user, post: post });
-      });
+      if (user === undefined) {
+        res.send("そのユーザーいないよ");
+      } else {
+        getPost().then((result) => {
+          res.send({ user: user, post: post });
+        });
+      }
     });
   }
 });
@@ -437,8 +445,10 @@ router.get("/followinfo/:id", function (req, res) {
       .find({ userId: req.params.id })
       .exec()
       .then((result) => {
-        follows = result[0].follow;
-        followers = result[0].follower;
+        if (result.length !== 0) {
+          follows = result[0].follow;
+          followers = result[0].follower;
+        }
       });
   }
   async function getfollowinfo() {
@@ -462,7 +472,7 @@ router.get("/followinfo/:id", function (req, res) {
     }
   }
   if (req.params.id === "undefined" || req.params.id === "null") {
-    res.send("undefineになってますがな！！");
+    res.send("undefineだよー");
   } else {
     getfollowUser().then((result) => {
       getfollowinfo().then((result) => {
@@ -599,28 +609,32 @@ router.get("/postdetail/:id", function (req, res) {
     res.send("undefineだよー");
   } else {
     getPostDetail().then((result) => {
-      getComment().then((result) => {
-        getUserInfo().then((result) => {
-          getCommentUserInfo().then((result) => {
-            const newPostData = postData.toObject();
-            // 投稿にユーザー情報を紐付け
-            newPostData.userinfo = userInfo;
-            // コメントにユーザー情報紐付け
-            const newCommentData = [];
-            for (let comment of commentData) {
-              let newComment = comment.toObject();
-              for (let commentUser of commentUserInfo) {
-                if (comment.userId === commentUser.userId) {
-                  newComment.userInfo = commentUser;
+      if (postData === undefined) {
+        res.send("その投稿ないよ");
+      } else {
+        getComment().then((result) => {
+          getUserInfo().then((result) => {
+            getCommentUserInfo().then((result) => {
+              const newPostData = postData.toObject();
+              // 投稿にユーザー情報を紐付け
+              newPostData.userinfo = userInfo;
+              // コメントにユーザー情報紐付け
+              const newCommentData = [];
+              for (let comment of commentData) {
+                let newComment = comment.toObject();
+                for (let commentUser of commentUserInfo) {
+                  if (comment.userId === commentUser.userId) {
+                    newComment.userInfo = commentUser;
+                  }
                 }
+                newCommentData.push(newComment);
               }
-              newCommentData.push(newComment);
-            }
-            newPostData.comments = newCommentData;
-            res.send(newPostData);
+              newPostData.comments = newCommentData;
+              res.send(newPostData);
+            });
           });
         });
-      });
+      }
     });
   }
 });
