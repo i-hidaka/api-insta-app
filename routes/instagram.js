@@ -404,7 +404,11 @@ router.get("/mypage/:id", function (req, res) {
         post = result;
       });
   }
-  if (req.params.id === "undefined" || req.params.id === "null") {
+  if (
+    req.params.id === "undefined" ||
+    req.params.id === "null" ||
+    req.params.id === "NaN"
+  ) {
     res.send("undefineだよー");
   } else {
     getUser().then((result) => {
