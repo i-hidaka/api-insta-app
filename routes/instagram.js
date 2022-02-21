@@ -959,7 +959,11 @@ router.post("/delete/comment", function (req, res) {
     { commentId: req.body.commentId },
     function (err, result) {
       if (result.deletedCount === 0) {
-        res.send({ status: "error", message: "そのコメント存在しません" });
+        res.send({
+          status: "error",
+          data: req.body.commentId,
+          message: "そのコメントは存在しません",
+        });
       } else {
         res.send({
           status: "success",
@@ -975,11 +979,15 @@ router.post("/delete/post", function (req, res) {
   // 投稿削除
   postmodel.remove({ postId: req.body.postId }, function (err, result) {
     if (result.deletedCount === 0) {
-      res.send({ status: "error", message: "その投稿は存在しません" });
+      res.send({
+        status: "error",
+        data: req.body.postId,
+        message: "その投稿は存在しません",
+      });
     } else {
       res.send({
         status: "success",
-        data: req.body.commentId,
+        data: req.body.postId,
         message: "投稿削除完了",
       });
     }
