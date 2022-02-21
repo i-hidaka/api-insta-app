@@ -954,7 +954,7 @@ router.get("/allusers", function (req, res) {
 });
 
 // コメント削除
-router.post("/delete/comment", function (req, res) {
+router.delete("/comment", function (req, res) {
   commentmodel.remove(
     { commentId: req.body.commentId },
     function (err, result) {
@@ -974,8 +974,9 @@ router.post("/delete/comment", function (req, res) {
     }
   );
 });
+
 // 投稿削除
-router.post("/delete/post", function (req, res) {
+router.delete("/post", function (req, res) {
   // 投稿削除
   postmodel.remove({ postId: req.body.postId }, function (err, result) {
     if (result.deletedCount === 0) {
