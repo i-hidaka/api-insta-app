@@ -952,4 +952,39 @@ router.get("/allusers", function (req, res) {
     res.send(result);
   });
 });
+
+// コメント削除
+router.post("/delete/comment", function (req, res) {
+  commentmodel.remove(
+    { commentId: req.body.commentId },
+    function (err, result) {
+      if (result.deletedCount === 0) {
+        res.send({ status: "error", message: "そのコメント存在しません" });
+      } else {
+        res.send({
+          status: "success",
+          data: req.body.commentId,
+          message: "コメント削除完了",
+        });
+      }
+    }
+  );
+});
+// 投稿削除
+router.post("/delete/post", function (req, res) {
+  // 投稿削除
+  postmodel.remove({ postId: req.body.postId }, function (err, result) {
+    if (result.deletedCount === 0) {
+      res.send({ status: "error", message: "その投稿は存在しません" });
+    } else {
+      res.send({
+        status: "success",
+        data: req.body.commentId,
+        message: "投稿削除完了",
+      });
+    }
+  });
+  // 投稿に紐付いたコメントも削除
+  commentmodel.remove({ postId: req.body.postId });
+});
 module.exports = router;
