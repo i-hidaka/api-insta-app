@@ -301,6 +301,7 @@ router.get("/home/:id", function (req, res) {
 // ユーザー情報変更
 router.post("/setting", function (req, res) {
   usermodel.find({ userId: req.body.userId }, function (err, result) {
+    let preUserName = result[0].userName;
     // 登録した名前と現在の名前が一致（変えていないとき)は保存する
     if (result[0].userName === req.body.userName) {
       result[0].userName = req.body.userName;
@@ -329,6 +330,21 @@ router.post("/setting", function (req, res) {
           }
         }
       );
+
+      // いいねリストから名前を検索して変更後の名前に上書きする
+      postmodel.find({}, function (err, posts) {
+        for (let post of posts) {
+          const newfavorites = [];
+          for (let favorite of post.favorites) {
+            if (favorite === preUserName) {
+              favorite = req.body.userName;
+            }
+            newfavorites.push(favorite);
+          }
+          post.favorites = newfavorites;
+          post.save();
+        }
+      });
     }
   });
 });
