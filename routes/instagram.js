@@ -3,6 +3,8 @@ var router = express.Router();
 // ローカルのときは3000番　http://localhost:3000
 // デプロイ先　https://api-instagram-app.herokuapp.com/
 const mongoose = require("mongoose");
+// トークン作成用
+const jwt = require("jsonwebtoken");
 
 // 環境変数を受けとる
 require("dotenv").config();
@@ -99,6 +101,12 @@ router.post("/login", function (req, res) {
           message: "ユーザー名とパスワードが一致しません",
         });
       } else {
+        // トークン作成
+        const payload = {
+          userName: req.body.userName,
+        };
+        const token = jwt.sign(payload, "superSecret");
+
         res.send({
           status: "success",
           data: {
@@ -110,6 +118,7 @@ router.post("/login", function (req, res) {
             icon: result[0].icon,
             bio: result[0].bio,
           },
+          token: token,
         });
       }
     }
@@ -262,6 +271,7 @@ router.get("/home/:id", function (req, res) {
               return a.commentDate > b.commentData ? 1 : -1;
             });
           }
+
           res.send(completePosts);
         });
       });
