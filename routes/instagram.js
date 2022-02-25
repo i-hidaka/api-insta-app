@@ -3,6 +3,7 @@ var router = express.Router();
 // ローカルのときは3000番　http://localhost:5000
 // デプロイ先　https://api-instagram-app.herokuapp.com/
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 
 // 環境変数を受けとる
 require("dotenv").config();
@@ -109,6 +110,10 @@ router.post("/login", function (req, res) {
           message: "ユーザー名とパスワードが一致しません",
         });
       } else {
+        // jwtを生成する
+        let token = jwt.sign({ userName: req.body.userName }, "secret", {
+          expiresIn: "24h",
+        });
         res.send({
           status: "success",
           data: {
@@ -120,6 +125,7 @@ router.post("/login", function (req, res) {
             icon: result[0].icon,
             bio: result[0].bio,
           },
+          token: token,
         });
       }
     }
