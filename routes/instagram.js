@@ -351,6 +351,15 @@ router.post("/setting", function (req, res) {
           post.save();
         }
       });
+      // 履歴の名前を変更する
+      logmodel.find({}, function (err, results) {
+        for (let log of results) {
+          if (log.contents.newUser === preUserName) {
+            log.contents.newUser = req.body.userName;
+            log.save();
+          }
+        }
+      });
     }
   });
 });
@@ -923,6 +932,7 @@ router.get("/notice/:id", function (req, res) {
   }
   getlog().then((result) => {
     getUser().then((result) => {
+      // console.log(users);
       const newlogs = [];
       for (let log of logs) {
         let newlog = log.toObject();
