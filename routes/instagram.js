@@ -357,6 +357,7 @@ router.post("/setting", function (req, res) {
           if (log.contents.newUser === preUserName) {
             log.contents.newUser = req.body.userName;
           }
+          // 強制保存
           log.markModified("contents");
           log.save();
         }
@@ -968,13 +969,15 @@ router.post("/notice/checked", function (req, res) {
     }
     res.send(results);
   });
+
   // 今から7日過ぎたら履歴からデータを消す
   logmodel.find({}, function (err, results) {
     for (let result of results) {
       if (
         result.date < new Date(new Date().setDate(new Date().getDate() - 7))
       ) {
-        logmodel.remove({ logId: result.logId });
+        console.log(result);
+        logmodel.remove({ logId: result.logId }, function (err) {});
       }
     }
   });
@@ -1027,6 +1030,6 @@ router.delete("/post", function (req, res) {
     }
   });
   // 投稿に紐付いたコメントも削除
-  commentmodel.remove({ postId: req.body.postId });
+  commentmodel.remove({ postId: req.body.postId }, function (err) {});
 });
 module.exports = router;
