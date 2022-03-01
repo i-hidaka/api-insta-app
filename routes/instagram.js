@@ -352,11 +352,12 @@ router.post("/setting", function (req, res) {
         }
       });
       // 履歴の名前を変更する
-      logmodel.find({}, function (err, results) {
+      logmodel.find({}, async function (err, results) {
         for (let log of results) {
           if (log.contents.newUser === preUserName) {
             log.contents.newUser = req.body.userName;
           }
+          log.markModified("contents");
           log.save();
         }
       });
