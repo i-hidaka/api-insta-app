@@ -356,8 +356,8 @@ router.post("/setting", function (req, res) {
         for (let log of results) {
           if (log.contents.newUser === preUserName) {
             log.contents.newUser = req.body.userName;
-            log.save();
           }
+          log.save();
         }
       });
     }
