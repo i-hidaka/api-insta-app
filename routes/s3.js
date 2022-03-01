@@ -25,11 +25,32 @@ async function generateUploadURL() {
 
   const params = {
     Bucket: bucketName,
-    Key: imageName,
+    Key: imageName + ".jpg",
     Expires: 60,
+    ContentType: "image/jpeg",
   };
 
   const uploadURL = await s3.getSignedUrlPromise("putObject", params);
   return uploadURL;
 }
 module.exports.generateUploadURL = generateUploadURL;
+
+// delete files from S3
+async function deleteFiles(urlArray) {
+    let keyArray = [];
+  for (let url of urlArray) {
+    const key = url.split("amazonaws.com/").pop();
+    keyArray.push({ Key: key });
+  }
+  const params = {
+    Bucket: bucketName,
+    Delete: {
+      Objects: keyArray,
+    },
+  };
+  await s3.deleteObjects(params, function (err, data) {
+    // an error occurred
+    if (err) console.log(err, err.stack);
+  });
+}
+module.exports.deleteFiles = deleteFiles;
