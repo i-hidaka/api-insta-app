@@ -421,8 +421,10 @@ router.get("/mypage/:id", function (req, res) {
           post = result;
         });
     }
-    getPost().then((result) => {
-      res.send({ user: user, post: post });
+    getUser().then(() => {
+      getPost().then(() => {
+        res.send({ user: user, post: post });
+      });
     });
   } catch (error) {
     res.send(error);
