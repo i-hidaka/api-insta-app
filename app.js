@@ -58,5 +58,14 @@ mongoose.connect(
     console.log("mongoDBに接続しました");
   }
 );
+var Rollbar = require("rollbar");
+var rollbar = new Rollbar({
+  accessToken: '0fd73a70b4de428392ff09f916996ca4',
+  captureUncaught: true,
+  captureUnhandledRejections: true
+});
+
+// record a generic message and send it to Rollbar
+rollbar.log("Hello world!");
 
 module.exports = app;
