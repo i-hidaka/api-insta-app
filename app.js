@@ -60,9 +60,9 @@ mongoose.connect(
 );
 var Rollbar = require("rollbar");
 var rollbar = new Rollbar({
-  accessToken: '6aa3803bb35a401eb7d9842d2d263ff4',
+  accessToken: "ec401ad228574f1aacd4eb6261783f31",
   captureUncaught: true,
-  captureUnhandledRejections: true
+  captureUnhandledRejections: true,
 });
 
 // record a generic message and send it to Rollbar
