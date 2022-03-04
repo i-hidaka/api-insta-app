@@ -143,19 +143,22 @@ router.post("/comment", function (req, res) {
       // ログに残す
       logmodel.find({}, function (err, result) {
         postmodel.find({ postId: req.body.postId }, function (err, postResult) {
-          const log = new logmodel();
-          log.logId = result[result.length - 1].logId + 1;
-          log.type = "comment";
-          log.date = new Date();
-          log.contents = {
-            newUser: comment.userId,
-            postId: comment.postId,
-            comment: comment.comment,
-          };
-          // 通知するべき人のID
-          log.informUserId = postResult[0].userId;
-          log.checked = false;
-          log.save();
+          // 自分でコメントしたときはログに残さない
+          if (postResult[0].userId !== req.body.userId) {
+            const log = new logmodel();
+            log.logId = result[result.length - 1].logId + 1;
+            log.type = "comment";
+            log.date = new Date();
+            log.contents = {
+              newUser: comment.userId,
+              postId: comment.postId,
+              comment: comment.comment,
+            };
+            // 通知するべき人のID
+            log.informUserId = postResult[0].userId;
+            log.checked = false;
+            log.save();
+          }
         });
       });
     });
