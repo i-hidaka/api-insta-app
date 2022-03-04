@@ -60,7 +60,7 @@ mongoose.connect(
 );
 var Rollbar = require("rollbar");
 var rollbar = new Rollbar({
-  accessToken: '0fd73a70b4de428392ff09f916996ca4',
+  accessToken: '6aa3803bb35a401eb7d9842d2d263ff4',
   captureUncaught: true,
   captureUnhandledRejections: true
 });

@@ -10,51 +10,44 @@ const logmodel = require("./models/log");
 
 // 会員登録する
 router.post("/signup", function (req, res) {
-  try {
-    //   全件取得した後、一番最後のIDを取得（自動採番）
-    usermodel.find({}, function (err, result) {
-      const register = new usermodel();
-      // 配列の一番最後のID番号に＋1
-      register.userId = result[result.length - 1].userId + 1;
-      register.userName = req.body.userName;
-      register.password = req.body.password;
-      register.follow = [];
-      register.follower = [];
-      register.icon = "";
-      register.bio = "";
+  //   全件取得した後、一番最後のIDを取得（自動採番）
+  usermodel.find({}, function (err, result) {
+    const register = new usermodel();
+    // 配列の一番最後のID番号に＋1
+    register.userId = result[result.length - 1].userId + 1;
+    register.userName = req.body.userName;
+    register.password = req.body.password;
+    register.follow = [];
+    register.follower = [];
+    register.icon = "";
+    register.bio = "";
 
-      usermodel.find(
-        { userName: req.body.userName },
-        function (err, nameResult) {
-          if (nameResult.length === 0) {
-            register.save();
-            res.send({
-              status: "success",
-              data: {
-                userId: register.userId,
-                userName: register.userName,
-                password: register.password,
-                follow: register.follow,
-                follower: register.follower,
-                icon: register.icon,
-                bio: register.bio,
-              },
-              message: "会員登録成功",
-            });
-          } else {
-            //  アドレスが既に登録済みの場合はエラーにする
-            res.send({
-              status: "error",
-              data: req.body,
-              message: "そのユーザーネームは既に登録済みです",
-            });
-          }
-        }
-      );
+    usermodel.find({ userName: req.body.userName }, function (err, nameResult) {
+      if (nameResult.length === 0) {
+        register.save();
+        res.send({
+          status: "success",
+          data: {
+            userId: register.userId,
+            userName: register.userName,
+            password: register.password,
+            follow: register.follow,
+            follower: register.follower,
+            icon: register.icon,
+            bio: register.bio,
+          },
+          message: "会員登録成功",
+        });
+      } else {
+        //  アドレスが既に登録済みの場合はエラーにする
+        res.send({
+          status: "error",
+          data: req.body,
+          message: "そのユーザーネームは既に登録済みです",
+        });
+      }
     });
-  } catch (error) {
-    res.send(error);
-  }
+  });
 });
 
 // ログイン
@@ -97,29 +90,33 @@ router.post("/login", function (req, res) {
 
 // 投稿する
 router.post("/post", function (req, res) {
-  const post = new postmodel();
-  postmodel.find({}, function (err, result) {
-    post.postId = result[result.length - 1].postId + 1;
-    post.userId = req.body.userId;
-    post.imageUrl = req.body.imageUrl;
-    post.caption = req.body.caption;
-    post.prefecture = req.body.prefecture;
-    post.postData = new Date();
-    post.favorites = [];
-    post.save();
-    res.send({
-      status: "success",
-      data: {
-        postId: post.postId,
-        userId: post.userId,
-        imageUrl: post.imageUrl,
-        caption: post.caption,
-        prefecture: post.prefecture,
-        postData: post.postData,
-        favorites: post.favorites,
-      },
+  try {
+    const post = new postmodel();
+    postmodel.find({}, function (err, result) {
+      post.postId = result[result.length - 1].postId + 1;
+      post.userId = req.body.userId;
+      post.imageUrl = req.body.imageUrl;
+      post.caption = req.body.caption;
+      post.prefecture = req.body.prefecture;
+      post.postData = new Date();
+      post.favorites = [];
+      post.save();
+      res.send({
+        status: "success",
+        data: {
+          postId: post.postId,
+          userId: post.userId,
+          imageUrl: post.imageUrl,
+          caption: post.caption,
+          prefecture: post.prefecture,
+          postData: post.postData,
+          favorites: post.favorites,
+        },
+      });
     });
-  });
+  } catch (error) {
+    res.send(error);
+  }
 });
 
 // コメントする
@@ -356,21 +353,29 @@ router.post("/favorite", function (req, res) {
         result[0].save();
         res.send(result[0]);
         // ログに残す
-        logmodel.find({}, function (err, logResult) {
-          const log = new logmodel();
-          log.logId = logResult[logResult.length - 1].logId + 1;
-          log.type = "favorite";
-          log.date = new Date();
-          log.contents = {
-            newUser: result[0].favorites[result[0].favorites.length - 1],
-            postId: req.body.postId,
-            comment: "",
-          };
-          // 通知するべき人のID
-          log.informUserId = result[0].userId;
-          log.checked = false;
-          log.save();
-        });
+        usermodel.find(
+          { userId: result[0].userId },
+          function (err, userresult) {
+            // 自分の投稿にいいねしたときはログに残さない
+            if (req.body.userName !== userresult[0].userName) {
+              logmodel.find({}, function (err, logResult) {
+                const log = new logmodel();
+                log.logId = logResult[logResult.length - 1].logId + 1;
+                log.type = "favorite";
+                log.date = new Date();
+                log.contents = {
+                  newUser: result[0].favorites[result[0].favorites.length - 1],
+                  postId: req.body.postId,
+                  comment: "",
+                };
+                // 通知するべき人のID
+                log.informUserId = result[0].userId;
+                log.checked = false;
+                log.save();
+              });
+            }
+          }
+        );
       }
     });
   } catch (error) {
@@ -1043,6 +1048,8 @@ router.delete("/post", function (req, res) {
     });
     // 投稿に紐付いたコメントも削除
     commentmodel.remove({ postId: req.body.postId }, function () {});
+    // 投稿に紐付いた通知削除
+    logmodel.remove({ "contents.postId": req.body.postId }, function () {});
   } catch (error) {
     res.send(error);
   }
