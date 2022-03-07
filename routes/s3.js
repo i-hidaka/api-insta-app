@@ -26,7 +26,6 @@ async function generateUploadURL() {
   const params = {
     Bucket: bucketName,
     Key: imageName + ".jpg",
-    Expires: 60,
     ContentType: "image/jpeg",
   };
 
@@ -37,7 +36,7 @@ module.exports.generateUploadURL = generateUploadURL;
 
 // delete files from S3
 async function deleteFiles(urlArray) {
-    let keyArray = [];
+  let keyArray = [];
   for (let url of urlArray) {
     const key = url.split("amazonaws.com/").pop();
     keyArray.push({ Key: key });
