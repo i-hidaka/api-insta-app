@@ -1038,6 +1038,10 @@ router.delete("/comment", function (req, res) {
             data: req.body.commentId,
             message: "コメント削除完了",
           });
+          logmodel.remove(
+            { "contents.commentId": req.body.commentId },
+            function () {}
+          );
         }
       }
     );
