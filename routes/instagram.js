@@ -153,7 +153,7 @@ router.post("/comment", function (req, res) {
               newUser: comment.userId,
               postId: comment.postId,
               comment: comment.comment,
-              commnetId: comment.commentId,
+              commentId: comment.commentId,
             };
             // 通知するべき人のID
             log.informUserId = postResult[0].userId;
@@ -371,6 +371,7 @@ router.post("/favorite", function (req, res) {
                   newUser: result[0].favorites[result[0].favorites.length - 1],
                   postId: req.body.postId,
                   comment: "",
+                  commentId: "",
                 };
                 // 通知するべき人のID
                 log.informUserId = result[0].userId;
@@ -552,6 +553,7 @@ router.post("/follow", function (req, res) {
                   ],
                 postId: "",
                 comment: "",
+                commentId:""
               };
               // 通知するべき人のID
               log.informUserId = req.body.targetUserId;
