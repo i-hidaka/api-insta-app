@@ -19,7 +19,8 @@ router.post("/signup", function (req, res) {
     register.password = req.body.password;
     register.follow = [];
     register.follower = [];
-    register.icon = "";
+    register.icon =
+      "https://s3.ap-northeast-1.amazonaws.com/i.hidaka-s3/247564d6c57500e49c659d1019f37162";
     register.bio = "";
 
     usermodel.find({ userName: req.body.userName }, function (err, nameResult) {
@@ -553,7 +554,7 @@ router.post("/follow", function (req, res) {
                   ],
                 postId: "",
                 comment: "",
-                commentId:""
+                commentId: "",
               };
               // 通知するべき人のID
               log.informUserId = req.body.targetUserId;
