@@ -10,8 +10,9 @@ router.get("/", async (req, res) => {
 });
 
 // 画像をバケットから削除
-router.delete("/",(req, res) => {
-  deleteFiles(req.body.urlArray);  
+router.delete("/", async (req, res) => {
+  await deleteFiles(req.body.urlArray);
+  res.send({ status: "success" });
 });
 
 module.exports = router;
