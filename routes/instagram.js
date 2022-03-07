@@ -25,6 +25,11 @@ router.post("/signup", function (req, res) {
 
     usermodel.find({ userName: req.body.userName }, function (err, nameResult) {
       if (nameResult.length === 0) {
+        // jwtを生成する
+        let token = jwt.sign({ userName: req.body.userName }, "secret", {
+          expiresIn: "24h",
+        });
+
         register.save();
         res.send({
           status: "success",
@@ -38,6 +43,7 @@ router.post("/signup", function (req, res) {
             bio: register.bio,
           },
           message: "会員登録成功",
+          token: token,
         });
       } else {
         //  アドレスが既に登録済みの場合はエラーにする
