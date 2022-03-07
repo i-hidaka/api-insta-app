@@ -153,6 +153,7 @@ router.post("/comment", function (req, res) {
               newUser: comment.userId,
               postId: comment.postId,
               comment: comment.comment,
+              commnetId:comment.commentId
             };
             // 通知するべき人のID
             log.informUserId = postResult[0].userId;
