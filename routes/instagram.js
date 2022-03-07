@@ -593,6 +593,14 @@ router.post("/unfollow", function (req, res) {
           }
         );
         res.send(result[0]);
+        // 通知から消す
+        logmodel.remove(
+          {
+            "contents.newUser": req.body.userId,
+            informUserId: req.body.targetUserId,
+          },
+          function () {}
+        );
       }
     });
   } catch (error) {
