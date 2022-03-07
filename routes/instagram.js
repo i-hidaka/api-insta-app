@@ -153,7 +153,7 @@ router.post("/comment", function (req, res) {
               newUser: comment.userId,
               postId: comment.postId,
               comment: comment.comment,
-              commnetId:comment.commentId
+              commnetId: comment.commentId,
             };
             // 通知するべき人のID
             log.informUserId = postResult[0].userId;
@@ -1039,12 +1039,12 @@ router.delete("/comment", function (req, res) {
             data: req.body.commentId,
             message: "コメント削除完了",
           });
-          logmodel.remove(
-            { "contents.commentId": req.body.commentId },
-            function () {}
-          );
         }
       }
+    );
+    logmodel.remove(
+      { "contents.commentId": req.body.commentId },
+      function () {}
     );
   } catch (error) {
     res.send(error);
