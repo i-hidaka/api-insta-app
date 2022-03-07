@@ -401,6 +401,13 @@ router.post("/unfavorite", function (req, res) {
           data: req.body,
           message: "いいねしてません",
         });
+        logmodel.remove(
+          {
+            "contents.postId": req.body.postId,
+            "contents.newUser": req.body.userName,
+          },
+          function () {}
+        );
       }
     });
   } catch (error) {
