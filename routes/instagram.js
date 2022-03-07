@@ -395,12 +395,7 @@ router.post("/unfavorite", function (req, res) {
         result[0].favorites.splice(index, 1);
         result[0].save();
         res.send(result[0]);
-      } else {
-        res.send({
-          status: "error",
-          data: req.body,
-          message: "いいねしてません",
-        });
+        // 通知から消す
         logmodel.remove(
           {
             "contents.postId": req.body.postId,
@@ -408,6 +403,12 @@ router.post("/unfavorite", function (req, res) {
           },
           function () {}
         );
+      } else {
+        res.send({
+          status: "error",
+          data: req.body,
+          message: "いいねしてません",
+        });
       }
     });
   } catch (error) {
