@@ -50,5 +50,22 @@ app.use(function (err, req, res, next) {
   res.status(err.status || 500);
   res.render("error");
 });
+//  mongoDBに接続
+mongoose.connect(
+  // .envファイルから環境変数をもってくる「process.env.設定したkey」で使用（デプロイしたらそこで環境変数新たに設定）
+  `mongodb+srv://${process.env.NAME}:${process.env.PASS}@cluster0.xkm6r.mongodb.net/instagram?retryWrites=true&w=majority`,
+  () => {
+    console.log("mongoDBに接続しました");
+  }
+);
+var Rollbar = require("rollbar");
+var rollbar = new Rollbar({
+  accessToken: "ec401ad228574f1aacd4eb6261783f31",
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+});
+
+// record a generic message and send it to Rollbar
+rollbar.log("Hello world!");
 
 module.exports = app;
