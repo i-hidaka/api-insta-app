@@ -856,7 +856,7 @@ router.get("/allposts", function (req, res) {
         .find({})
         .exec()
         .then((result) => {
-          posts = result;
+          posts = result.shift();
         });
     }
     async function getallUsers() {
