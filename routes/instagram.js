@@ -862,7 +862,7 @@ router.get("/allposts", function (req, res) {
         .find({})
         .exec()
         .then((result) => {
-          posts = result.shift();
+          posts = result;
         });
     }
     async function getallUsers() {
