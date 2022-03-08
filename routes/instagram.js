@@ -916,6 +916,8 @@ router.get("/allposts", function (req, res) {
               return a.commentDate > b.commentDate ? 1 : -1;
             });
           }
+          // postId:0を削除
+         completePosts.pop()
           res.send(completePosts);
         });
       });
